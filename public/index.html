@@ -263,7 +263,7 @@
     <div class="etape">
       <div class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
       <div><div class="tt">La musique, c'est vous</div>
-      <div class="dd">Ajoutez vos chansons et votez ♥ : la plus aimée passe juste après le titre en cours. Vous pouvez aussi créer votre playlist souvenir.</div></div>
+      <div class="dd">Ajoutez n'importe quelle chanson et votez ♥ : la plus aimée passe juste après le titre en cours.</div></div>
     </div>
     <div class="etape">
       <div class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
@@ -291,12 +291,7 @@
 
 <!-- ===================== UNIVERS MUSIQUE · Ce soir ===================== -->
 <div class="page actif" id="page-soiree">
-  <div class="basculer">
-    <button class="pill actif" data-page="page-soiree">Ce soir</button>
-    <button class="pill" data-page="page-playlists">Playlists</button>
-  </div>
-
-  <section class="now" id="now">
+    <section class="now" id="now">
     <div class="vinyle" id="vinyle"><div class="etiquette">A&amp;L</div></div>
     <p class="titre" id="np-titre">En attente de musique…</p>
     <p class="artiste" id="np-artiste">La soirée va bientôt commencer</p>
@@ -329,39 +324,6 @@
 
   <footer><em>Merci d'être là ce soir</em><br>La chanson la plus aimée passe juste après le titre en cours.<br>
   <button class="lien-aide" id="lien-aide">Revoir comment ça marche</button></footer>
-</div>
-
-<!-- ===================== UNIVERS MUSIQUE · Playlists ===================== -->
-<div class="page" id="page-playlists">
-  <div class="basculer">
-    <button class="pill" data-page="page-soiree">Ce soir</button>
-    <button class="pill actif" data-page="page-playlists">Playlists</button>
-  </div>
-
-  <div id="pl-liste-vue">
-    <div class="carte-info">
-      <span class="ico" style="color:var(--champagne)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
-      <p>Les playlists créées ici sont <b>offertes à Audrey &amp; Ludo</b> sur leur Spotify : ils pourront les lancer pendant la soirée, et les garder en souvenir. Pour faire passer une chanson <b>maintenant</b>, envoyez-la dans <b>Ce soir</b> !</p>
-    </div>
-    <p class="section-titre">Les playlists des invités</p>
-    <div class="liste" id="pl-liste"><p class="vide">Chargement…</p></div>
-    <button class="btn-or" id="btn-nouvelle-pl">＋ Créer ma playlist</button>
-    <div class="form-pl" id="form-pl">
-      <input class="champ" id="pl-nom" placeholder="Nom de la playlist (ex : Les tubes de nos 20 ans)" maxlength="60">
-      <input class="champ" id="pl-auteur" placeholder="Votre prénom" maxlength="40">
-      <button class="btn-or" id="btn-creer-pl">Créer</button>
-    </div>
-    <footer><em>Un souvenir pour les mariés</em><br>Vos playlists resteront sur leur compte Spotify après la fête.</footer>
-  </div>
-
-  <div id="pl-detail-vue" style="display:none">
-    <button class="btn-retour" id="btn-retour">← Toutes les playlists</button>
-    <p class="section-titre" id="pl-detail-titre">Playlist</p>
-    <div class="liste" id="pl-detail-pistes"><p class="vide">Chargement…</p></div>
-    <p class="section-titre">Ajouter à cette playlist</p>
-    <input id="pl-q" type="search" class="champ" placeholder="Titre, artiste…" autocomplete="off" aria-label="Rechercher une chanson pour la playlist">
-    <div class="resultats" id="pl-resultats"></div>
-  </div>
 </div>
 
 <!-- ===================== UNIVERS LIVRE D'OR ===================== -->
@@ -448,7 +410,6 @@ $('btn-entrer').onclick = ()=>{
   const prenom = $('accueil-prenom').value.trim();
   if(!prenom){ toast('Dites-nous votre prénom !'); $('accueil-prenom').focus(); return; }
   localStorage.setItem('prenom', prenom);
-  $('pl-auteur').value = prenom;
   $('accueil').classList.add('ferme');
   toast('Bienvenue '+prenom+' ! 🥂');
 };
@@ -478,12 +439,11 @@ $('lien-aide').onclick = ()=>{
 
 /* ================= Navigation à deux niveaux ================= */
 const UNIVERS = {
-  'page-soiree':'page-soiree', 'page-playlists':'page-soiree',
+  'page-soiree':'page-soiree',
   'page-livredor':'page-livredor',
 };
 const SOUS_TITRES = {
   'page-soiree':'Ajoutez vos chansons, votez ♥ pour les faire remonter',
-  'page-playlists':'Créez votre playlist souvenir pour les mariés',
   'page-livredor':'Partagez vos photos et vos petits mots',
 };
 function montrer(pageId){
@@ -494,7 +454,6 @@ function montrer(pageId){
   document.querySelectorAll('.pill[data-page]').forEach(x=>
     x.classList.toggle('actif', x.dataset.page===pageId));
   $('sous-titre').textContent = SOUS_TITRES[pageId];
-  if(pageId==='page-playlists') chargerPlaylists();
   if(pageId==='page-livredor') chargerGalerie();
   window.scrollTo({top:0});
 }
@@ -616,84 +575,6 @@ function brancheRecherche(inputId, resultatsId, onAjout){
 brancheRecherche('q','resultats', async uri=>{
   const {ok, data:d} = await api('/api/queue',{method:'POST',body:JSON.stringify({uri})});
   if(ok){ toast('🎶 Ajoutée — votez pour la faire remonter !'); afficherFile(d.queue||[]); return true; }
-  toast(d.error || 'Oups, réessayez.'); return false;
-});
-
-/* ================= Musique · Playlists des invités ================= */
-let plCourante = null;
-
-async function chargerPlaylists(){
-  const {data:d} = await api('/api/gplaylists');
-  $('pl-liste').innerHTML = (d.playlists||[]).length
-    ? d.playlists.map(p=>
-        '<div class="carte-pl" data-id="'+p.id+'" role="button" tabindex="0">'+
-          '<div class="disque"></div>'+
-          '<div class="infos"><div class="t">'+esc(p.name)+'</div><div class="a">par '+esc(p.author)+'</div></div>'+
-          '<span class="fleche">›</span></div>').join('')
-    : '<p class="vide">Aucune playlist pour l\'instant. Créez la première !</p>';
-}
-
-$('pl-liste').addEventListener('click', e=>{
-  const c = e.target.closest('.carte-pl');
-  if(c) ouvrirPlaylist(c.dataset.id);
-});
-
-$('btn-nouvelle-pl').onclick = ()=> $('form-pl').classList.toggle('ouvert');
-
-$('btn-creer-pl').onclick = async ()=>{
-  const name = $('pl-nom').value.trim(), author = $('pl-auteur').value.trim();
-  if(!name || !author){ toast('Nom de playlist et prénom, s\'il vous plaît !'); return; }
-  const {ok, data:d} = await api('/api/gplaylists',{method:'POST',body:JSON.stringify({name,author})});
-  if(ok){
-    localStorage.setItem('prenom', author);
-    $('pl-nom').value=''; $('form-pl').classList.remove('ouvert');
-    toast('💿 Playlist créée !');
-    await chargerPlaylists();
-    ouvrirPlaylist(d.id);
-  } else toast(d.error || 'Oups, réessayez.');
-};
-$('pl-auteur').value = localStorage.getItem('prenom') || '';
-
-async function ouvrirPlaylist(id){
-  plCourante = id;
-  $('pl-liste-vue').style.display='none';
-  $('pl-detail-vue').style.display='block';
-  $('pl-detail-pistes').innerHTML = '<p class="vide">Chargement…</p>';
-  const {data:d} = await api('/api/gplaylists/'+id+'/tracks');
-  $('pl-detail-titre').textContent = d.name ? d.name + ' — par ' + d.author : 'Playlist';
-  $('pl-detail-pistes').innerHTML = (d.tracks||[]).length
-    ? d.tracks.map(t=>'<div class="piste">'+img(t.image)+
-        '<div class="infos"><div class="t">'+esc(t.title)+'</div><div class="a">'+esc(t.artists)+'</div></div>'+
-        '<button class="btn-mini" data-uri="'+t.uri+'">＋ Ce soir</button></div>').join('')
-    : '<p class="vide">Playlist vide — ajoutez la première chanson !</p>';
-}
-
-$('pl-detail-pistes').addEventListener('click', async e=>{
-  const b = e.target.closest('.btn-mini');
-  if(!b || b.disabled) return;
-  b.disabled = true;
-  const {ok, data:d} = await api('/api/queue',{method:'POST',body:JSON.stringify({uri:b.dataset.uri})});
-  if(ok){
-    b.textContent = '✓ Ce soir';
-    afficherFile(d.queue||[]);
-    toast('🎶 Envoyée dans la liste de ce soir !');
-  }else{
-    b.disabled = false;
-    toast(d.error || 'Oups, réessayez.');
-  }
-});
-
-$('btn-retour').onclick = ()=>{
-  plCourante = null;
-  $('pl-detail-vue').style.display='none';
-  $('pl-liste-vue').style.display='block';
-  $('pl-q').value=''; $('pl-resultats').innerHTML='';
-};
-
-brancheRecherche('pl-q','pl-resultats', async uri=>{
-  if(!plCourante) return false;
-  const {ok, data:d} = await api('/api/gplaylists/'+plCourante+'/tracks',{method:'POST',body:JSON.stringify({uri})});
-  if(ok){ toast('💿 Ajoutée à la playlist !'); ouvrirPlaylist(plCourante); return true; }
   toast(d.error || 'Oups, réessayez.'); return false;
 });
 
