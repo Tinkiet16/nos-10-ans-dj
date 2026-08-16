@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Espace des mariés · Audrey &amp; Ludo</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--nuit:#191a20;--carte:#23252d;--carte-2:#2a2d36;--ivoire:#f2efe9;
+        --etain:#b9bec7;--etain-sombre:#7d828c;--champagne:#d8b770}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--nuit);color:var(--ivoire);font-family:'Jost',system-ui,sans-serif;
+       font-weight:300;min-height:100dvh;padding:28px 20px 48px;max-width:520px;margin:0 auto}
+  h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:32px;text-align:center}
+  .intro{color:var(--etain);font-size:14px;text-align:center;margin-top:6px}
+  .etat{margin:20px 0;padding:12px;border-radius:12px;font-size:14px;text-align:center}
+  .ok{background:#1f2b22;color:#8fce9a}
+  .ko{background:#2b2220;color:#ce9a8f}
+  a.btn,button.btn{display:block;width:100%;text-align:center;background:var(--champagne);
+    color:var(--nuit);text-decoration:none;border:none;font-family:inherit;font-weight:500;
+    font-size:15px;padding:14px;border-radius:999px;cursor:pointer}
+  .section-titre{font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--etain-sombre);font-weight:500;margin:28px 2px 10px}
+  .pl{display:flex;align-items:center;gap:12px;background:var(--carte);
+    border:1px solid #30333d;border-radius:14px;padding:10px 12px;margin-bottom:8px}
+  .pl img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--carte-2)}
+  .pl .infos{flex:1;min-width:0}
+  .pl .t{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl .a{color:var(--etain);font-size:12.5px}
+  .pl .badge{font-size:10px;color:var(--champagne)}
+  .btn-jouer{flex:none;border:1px solid var(--champagne);background:transparent;color:var(--champagne);
+    font-family:inherit;font-size:13px;padding:9px 16px;border-radius:999px;cursor:pointer}
+  .btn-jouer:active{background:var(--champagne);color:var(--nuit)}
+  .vide{color:var(--etain-sombre);font-size:14px;text-align:center;padding:14px}
+  #qr{margin:16px auto 8px;width:200px;height:200px;background:#fff;padding:10px;border-radius:12px;display:none}
+  #url-invites{font-size:13px;color:var(--champagne);word-break:break-all;text-align:center}
+  .btn-secondaire{display:block;width:100%;background:none;border:1px solid #383b45;color:var(--etain);
+    font-family:inherit;font-size:14px;padding:12px;border-radius:999px;cursor:pointer;margin-top:26px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:var(--champagne);color:var(--nuit);font-weight:500;font-size:14px;
+    padding:12px 22px;border-radius:999px;opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .25s;max-width:90vw;text-align:center}
+  .toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<h1>Espace des mariés</h1>
+<p class="intro">Pilotez la musique, les invités s'occupent du reste.</p>
+
+<div class="etat ko" id="etat">Vérification…</div>
+<a class="btn" href="/login" id="btn-connexion">Connecter mon Spotify</a>
+
+<div id="zone-connecte" style="display:none">
+
+  <p class="section-titre">Demandes des invités</p>
+  <button class="btn" id="btn-pause" style="margin-bottom:10px">…</button>
+  <div id="file-admin"><p class="vide">Chargement…</p></div>
+  <button class="btn-secondaire" id="btn-vider">Vider toute la liste d'attente</button>
+
+  <p class="section-titre">Vos playlists — appuyez pour lancer</p>
+  <p class="vide" style="padding:0 0 10px">💡 Ouvrez d'abord Spotify sur l'ordinateur et jouez n'importe quel titre une fois, pour que l'appareil soit actif.</p>
+  <div id="playlists"><p class="vide">Chargement…</p></div>
+
+  <p class="section-titre">QR code pour les invités</p>
+  <div id="qr"></div>
+  <p id="url-invites"></p>
+
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let toastTimer;
+function toast(msg){
+  $('toast').textContent=msg; $('toast').classList.add('visible');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2600);
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+/* Code admin (si défini côté serveur) */
+function apiAdmin(url, options={}){
+  const code = localStorage.getItem('adminCode') || '';
+  return fetch(url, {...options, headers:{
+    ...(options.body?{'Content-Type':'application/json'}:{}),
+    ...(code?{'X-Admin-Code':code}:{}),
+    ...(options.headers||{})
+  }}).then(async r=>{
+    if(r.status===403){
+      const saisie = prompt('Code admin :');
+      if(saisie){ localStorage.setItem('adminCode', saisie); return apiAdmin(url, options); }
+    }
+    return r;
+  });
+}
+
+async function verifier(){
+  const d = await (await fetch('/api/status')).json();
+  if(d.connected){
+    $('etat').textContent = '✓ Spotify connecté — tout est prêt !';
+    $('etat').className = 'etat ok';
+    $('btn-connexion').style.display = 'none';
+    $('zone-connecte').style.display = 'block';
+    const url = location.origin + '/';
+    $('qr').style.display = 'block';
+    new QRCode($('qr'), {text:url, width:180, height:180});
+    $('url-invites').textContent = 'Page invités : ' + url;
+    chargerPlaylists();
+    chargerEtat();
+  }else{
+    $('etat').textContent = 'Spotify n\'est pas encore connecté.';
+    $('etat').className = 'etat ko';
+  }
+}
+
+async function chargerPlaylists(){
+  const d = await (await apiAdmin('/api/admin/playlists')).json();
+  $('playlists').innerHTML = (d.playlists||[]).length
+    ? d.playlists.map(p=>
+        '<div class="pl">'+
+          (p.image?'<img src="'+p.image+'" alt="">':'<img alt="">')+
+          '<div class="infos"><div class="t">'+esc(p.name)+'</div>'+
+          '<div class="a">'+p.total+' titres'+(p.invite?' · <span class="badge">créée par un invité</span>':'')+'</div></div>'+
+          '<button class="btn-jouer" data-uri="'+p.uri+'">▶ Lancer</button></div>').join('')
+    : '<p class="vide">Aucune playlist trouvée sur votre compte.</p>';
+}
+
+/* ---- Demandes des invités : pause + modération ---- */
+let etatOuvert = true;
+async function chargerEtat(){
+  const r = await apiAdmin('/api/admin/etat');
+  if(!r.ok) return;
+  const d = await r.json();
+  etatOuvert = d.ouvert;
+  $('btn-pause').textContent = etatOuvert
+    ? '⏸ Mettre les demandes en pause (dîner, discours…)'
+    : '▶ Rouvrir les demandes des invités';
+  $('btn-pause').style.background = etatOuvert ? '' : '#8fce9a';
+  $('file-admin').innerHTML = (d.queue||[]).length
+    ? d.queue.map(t=>
+        '<div class="pl">'+
+          (t.image?'<img src="'+t.image+'" alt="">':'<img alt="">')+
+          '<div class="infos"><div class="t">'+esc(t.title)+'</div>'+
+          '<div class="a">'+esc(t.artists)+' · ♥ '+t.votes+'</div></div>'+
+          '<button class="btn-jouer" data-retirer="'+t.uri+'" aria-label="Retirer '+esc(t.title)+'">✕</button></div>').join('')
+    : '<p class="vide">Aucune demande en attente.</p>';
+}
+
+$('btn-pause').onclick = async ()=>{
+  const r = await apiAdmin('/api/admin/demandes',{method:'POST',
+    body:JSON.stringify({ouvert: !etatOuvert})});
+  if(r.ok){
+    toast(!etatOuvert ? '▶ Demandes rouvertes !' : '⏸ Demandes en pause.');
+    chargerEtat();
+  }
+};
+
+$('file-admin').addEventListener('click', async e=>{
+  const b = e.target.closest('[data-retirer]'); if(!b) return;
+  const r = await apiAdmin('/api/admin/retirer',{method:'POST',
+    body:JSON.stringify({uri: b.dataset.retirer})});
+  if(r.ok){ toast('Titre retiré.'); chargerEtat(); }
+});
+
+setInterval(chargerEtat, 10000);
+
+$('playlists').addEventListener('click', async e=>{
+  const b = e.target.closest('.btn-jouer[data-uri]'); if(!b) return;
+  const r = await apiAdmin('/api/admin/play',{method:'POST',body:JSON.stringify({uri:b.dataset.uri})});
+  const d = await r.json();
+  toast(r.ok ? '▶ Playlist lancée !' : (d.error || 'Oups, réessayez.'));
+});
+
+$('btn-vider').onclick = async ()=>{
+  if(!confirm('Vider la liste d\'attente des invités ?')) return;
+  await apiAdmin('/api/admin/clear-queue',{method:'POST'});
+  toast('Liste d\'attente vidée.');
+};
+
+verifier();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "Audrey & Ludo — Nos 10 ans",
+  "short_name": "A&L 10 ans",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#15161c",
+  "theme_color": "#15161c",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
