@@ -215,12 +215,16 @@ async function pistesDePlaylist(id) {
   let r = await spotify(`/playlists/${id}/tracks?` + new URLSearchParams({
     fields: "items(track(name,uri,artists(name),album(images)))",
     limit: "100",
+    market: "from_token",
     additional_types: "track",
   }));
   let items = r.body?.items || [];
+  const essai1 = `essai filtré: statut ${r.status}, ${items.length} éléments`;
   if (!items.length) {
-    r = await spotify(`/playlists/${id}/tracks?limit=100&additional_types=track`);
+    r = await spotify(`/playlists/${id}/tracks?limit=100&market=from_token`);
     items = r.body?.items || [];
+    console.log(`📀 Playlist ${id} — ${essai1} | essai complet: statut ${r.status}, ${items.length} éléments`
+      + (r.status >= 400 && r.body ? ` | réponse: ${JSON.stringify(r.body).slice(0, 200)}` : ""));
   }
   return items.filter(i => i.track).map(i => mapTrack(i.track));
 }
