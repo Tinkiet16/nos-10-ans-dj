@@ -325,7 +325,10 @@ app.post("/api/gplaylists", async (req, res) => {
   if (existantes.length >= 30) return res.status(429).json({ error: "Trop de playlists pour ce soir !" });
 
   const me = await spotify("/me");
-  if (!me.body?.id) return res.status(500).json({ error: "Spotify n'est pas connecté." });
+  if (!me.body?.id) {
+    console.log(`👥 Création playlist invitée — /me a échoué, statut ${me.status}`);
+    return res.status(500).json({ error: "Spotify n'est pas connecté." });
+  }
   const r = await spotify(`/users/${me.body.id}/playlists`, {
     method: "POST",
     body: JSON.stringify({
@@ -334,7 +337,12 @@ app.post("/api/gplaylists", async (req, res) => {
       description: "Playlist créée par un invité pour les 10 ans d'Audrey & Ludo",
     }),
   });
-  if (!r.body?.id) return res.status(500).json({ error: "Spotify a refusé la création." });
+  if (!r.body?.id) {
+    console.log(`👥 Création playlist invitée — statut ${r.status}, réponse: ${JSON.stringify(r.body || {}).slice(0, 300)}`);
+    const detail = r.body?.error?.message;
+    return res.status(500).json({ error: "Spotify a refusé la création" + (detail ? " (" + detail + ")" : ".") });
+  }
+  console.log(`👥 Playlist invitée créée : ${name} (par ${author})`);
   res.json({ ok: true, id: r.body.id });
 });
 
