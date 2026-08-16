@@ -79,6 +79,11 @@ app.post("/api/bonjour", (req, res) => {
   res.json({ ok: true });
 });
 
+// Compteur public : combien d'invités ont ouvert l'appli (visible par tous)
+app.get("/api/compteur", (req, res) => {
+  res.json({ total: Object.keys(invites).length });
+});
+
 // ---- Liste d'attente des invités (en mémoire, le temps d'une soirée) ----
 // [{ uri, title, artists, image, addedBy, pour:[inviteId], contre:[inviteId], addedAt }]
 let queue = [];
