@@ -241,11 +241,17 @@ app.get("/api/playlist-en-cours", async (req, res) => {
     return res.json(playlistEnCoursCache.data);
   }
   const info = await spotify(`/playlists/${id}?fields=name`);
-  const data = {
-    actif: true,
-    name: info.body?.name || "Playlist",
-    tracks: await pistesDePlaylist(id),
-  };
+  let tracks = await pistesDePlaylist(id);
+  let source = "playlist";
+  if (!tracks.length) {
+    // Spotify bride la lecture du contenu des playlists pour certaines apps
+    // récentes : on se rabat sur la file du lecteur (~20 prochains titres),
+    // qui fonctionne toujours.
+    const q = await spotify("/me/player/queue");
+    tracks = (q.body?.queue || []).map(mapTrack);
+    source = "queue";
+  }
+  const data = { actif: true, name: (info.body?.name || "Playlist").trim(), tracks, source };
   // On ne met en cache que les réponses utiles (jamais une liste vide)
   if (data.tracks.length) playlistEnCoursCache = { id, at: Date.now(), data };
   res.json(data);
