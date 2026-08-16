@@ -50,7 +50,6 @@ const SCOPES = [
   "playlist-modify-private",
 ].join(" ");
 
-const PREFIXE_INVITE = "💍 Nos 10 ans · ";
 const MARGE_FIN_MS = 15_000; // envoi de la gagnante X ms avant la fin du titre
 
 const app = express();
@@ -168,19 +167,6 @@ function publicQueue(req) {
       votes: t.votes, jaiVote: t.voters.includes(id),
     }));
 }
-// "💍 Nos 10 ans · Les tubes (par Marc)" → { name:"Les tubes", author:"Marc" }
-function parseNomInvite(fullName) {
-  const brut = fullName.slice(PREFIXE_INVITE.length);
-  const m = brut.match(/^(.*) \(par (.*)\)$/);
-  return m ? { name: m[1], author: m[2] } : { name: brut, author: "" };
-}
-async function playlistsInvites() {
-  const r = await spotify("/me/playlists?limit=50");
-  return (r.body?.items || [])
-    .filter(p => p.name.startsWith(PREFIXE_INVITE))
-    .map(p => ({ spotifyId: p.id, uri: p.uri, ...parseNomInvite(p.name) }));
-}
-
 // ---- API invités : lecture en cours ------------------------------------
 app.get("/api/now-playing", async (req, res) => {
   const r = await spotify("/me/player/currently-playing");
@@ -308,69 +294,6 @@ app.post("/api/vote", (req, res) => {
     t.votes++;
   }
   res.json({ ok: true, queue: publicQueue(req) });
-});
-
-// ---- API invités : playlists créées par les invités -------------------------
-// (reconstruites depuis Spotify : rien à perdre si le serveur redémarre)
-app.get("/api/gplaylists", async (req, res) => {
-  const pls = await playlistsInvites();
-  res.json({ playlists: pls.map(p => ({ id: p.spotifyId, name: p.name, author: p.author })) });
-});
-
-app.post("/api/gplaylists", async (req, res) => {
-  const name = String(req.body?.name || "").trim().slice(0, 60);
-  const author = String(req.body?.author || "").trim().slice(0, 40);
-  if (!name || !author) return res.status(400).json({ error: "Donnez un nom à la playlist et votre prénom." });
-  const existantes = await playlistsInvites();
-  if (existantes.length >= 30) return res.status(429).json({ error: "Trop de playlists pour ce soir !" });
-
-  const me = await spotify("/me");
-  if (!me.body?.id) {
-    console.log(`👥 Création playlist invitée — /me a échoué, statut ${me.status}`);
-    return res.status(500).json({ error: "Spotify n'est pas connecté." });
-  }
-  const r = await spotify(`/users/${me.body.id}/playlists`, {
-    method: "POST",
-    body: JSON.stringify({
-      name: `${PREFIXE_INVITE}${name} (par ${author})`,
-      public: false,
-      description: "Playlist créée par un invité pour les 10 ans d'Audrey & Ludo",
-    }),
-  });
-  if (!r.body?.id) {
-    console.log(`👥 Création playlist invitée — statut ${r.status}, réponse: ${JSON.stringify(r.body || {}).slice(0, 300)}`);
-    const detail = r.body?.error?.message;
-    return res.status(500).json({ error: "Spotify a refusé la création" + (detail ? " (" + detail + ")" : ".") });
-  }
-  console.log(`👥 Playlist invitée créée : ${name} (par ${author})`);
-  res.json({ ok: true, id: r.body.id });
-});
-
-// Sécurité : on ne touche qu'aux playlists portant le préfixe invité
-async function playlistInviteAutorisee(id) {
-  const r = await spotify(`/playlists/${id}?fields=id,name`);
-  return r.body && r.body.name && r.body.name.startsWith(PREFIXE_INVITE) ? r.body : null;
-}
-
-app.get("/api/gplaylists/:id/tracks", async (req, res) => {
-  const p = await playlistInviteAutorisee(req.params.id);
-  if (!p) return res.status(404).json({ error: "Playlist inconnue." });
-  const infos = parseNomInvite(p.name);
-  const tracks = await pistesDePlaylist(p.id);
-  res.json({ name: infos.name, author: infos.author, tracks });
-});
-
-app.post("/api/gplaylists/:id/tracks", async (req, res) => {
-  const p = await playlistInviteAutorisee(req.params.id);
-  if (!p) return res.status(404).json({ error: "Playlist inconnue." });
-  const { uri } = req.body || {};
-  if (!uri || !uri.startsWith("spotify:track:")) return res.status(400).json({ error: "Titre invalide." });
-  const r = await spotify(`/playlists/${p.id}/tracks`, {
-    method: "POST",
-    body: JSON.stringify({ uris: [uri] }),
-  });
-  if (r.status >= 400) return res.status(500).json({ error: "Spotify a refusé l'ajout." });
-  res.json({ ok: true });
 });
 
 // ---- Livre d'or : photos des invités (Cloudinary) ---------------------------------
@@ -527,7 +450,6 @@ app.get("/api/admin/playlists", async (req, res) => {
     id: p.id, uri: p.uri, name: p.name,
     total: p.tracks?.total ?? null, // parfois absent (playlists collaboratives)
     image: p.images?.[p.images.length - 1]?.url || null,
-    invite: p.name.startsWith(PREFIXE_INVITE),
   }));
   // Compléter les totaux manquants (l'API ne les renvoie pas toujours)
   const manquants = playlists.filter(p => p.total === null || p.total === 0).slice(0, 30);
