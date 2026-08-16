@@ -1,0 +1,8 @@
+{
+  "name": "dix-ans-dj",
+  "version": "1.0.0",
+  "description": "Passerelle Spotify pour les invités - Nos 10 ans de mariage",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "express": "^4.19.0" }
+}
