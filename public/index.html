@@ -562,7 +562,9 @@ $('btn-playlist-complete').onclick = async ()=>{
     $('pc-pistes').innerHTML = '<p class="vide">Aucune playlist en cours pour l\'instant.</p>';
     return;
   }
-  $('pc-titre').textContent = d.name + ' — ' + d.tracks.length + ' titres';
+  $('pc-titre').textContent = d.source === 'queue'
+    ? d.name + ' — les ' + d.tracks.length + ' prochains titres'
+    : d.name + ' — ' + d.tracks.length + ' titres';
   $('pc-pistes').innerHTML = d.tracks.map(t=>
     '<div class="piste">'+img(t.image)+
       '<div class="infos"><div class="t">'+esc(t.title)+'</div><div class="a">'+esc(t.artists)+'</div></div>'+
