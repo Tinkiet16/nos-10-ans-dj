@@ -22,6 +22,10 @@
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{-webkit-text-size-adjust:100%}
+  /* Bandeau masque sous la barre d'état iPhone : le contenu défile dessous */
+  body::after{content:"";position:fixed;top:0;left:0;right:0;
+    height:env(safe-area-inset-top);z-index:60;pointer-events:none;
+    background:rgba(21,22,28,.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
   body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     background:
       radial-gradient(60% 40% at 15% 0%, rgba(226,192,120,.16), transparent 70%),
@@ -105,10 +109,16 @@
   .badge-suivante{font-size:10px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--champagne);font-weight:500;margin-bottom:2px}
 
-  .btn-vote{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    width:46px;height:46px;border-radius:12px;border:1px solid #383b45;background:var(--carte-2);
+  .col-votes{flex:none;display:flex;gap:6px}
+  .btn-vote{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    width:42px;height:48px;border-radius:12px;border:1px solid #383b45;background:var(--carte-2);
     color:var(--etain);cursor:pointer;font-family:inherit;
     transition:border-color .15s,color .15s,transform .1s}
+  .btn-vote.vote-contre{border-color:var(--rose);color:var(--rose);background:rgba(181,118,130,.1)}
+  .votants{font-size:11.5px;color:var(--etain-sombre);margin-top:3px;line-height:1.5}
+  .votants b{font-weight:500;color:var(--etain)}
+  .votants .p{color:var(--champagne)}
+  .votants .c{color:var(--rose)}
   .btn-vote .coeur{display:flex;line-height:1}
   .btn-vote .nb{font-size:12px;font-weight:500;line-height:1;margin-top:3px}
   .btn-vote.vote{border-color:var(--champagne);color:var(--champagne);background:rgba(216,183,112,.08)}
@@ -241,6 +251,25 @@
   .lien-aide{background:none;border:none;color:var(--etain-sombre);font-family:inherit;
     font-size:12px;cursor:pointer;text-decoration:underline;margin-top:8px}
 
+  /* ---- Tutoriels en images ---- */
+  .tuto{position:fixed;inset:0;background:rgba(12,13,16,.97);z-index:25;display:none;
+    flex-direction:column;align-items:center;justify-content:center;
+    padding:calc(30px + env(safe-area-inset-top)) 24px calc(30px + env(safe-area-inset-bottom));
+    text-align:center}
+  .tuto.ouvert{display:flex}
+  .tuto h3{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;
+    font-size:26px;line-height:1.15;max-width:340px}
+  .tuto .visuel{width:min(78vw,300px);margin:22px 0 18px;background:var(--carte);
+    border:1px solid #30333d;border-radius:18px;padding:14px}
+  .tuto .visuel svg{width:100%;height:auto;display:block}
+  .tuto .texte{color:var(--etain);font-size:14.5px;line-height:1.55;max-width:330px;min-height:66px}
+  .tuto .points{display:flex;gap:8px;margin:20px 0 16px}
+  .tuto .points span{width:8px;height:8px;border-radius:50%;background:#383b45;transition:background .2s}
+  .tuto .points span.actif{background:var(--champagne)}
+  .tuto .btn-or{max-width:300px}
+  .tuto .passer{background:none;border:none;color:var(--etain-sombre);font-family:inherit;
+    font-size:13px;cursor:pointer;text-decoration:underline;margin-top:14px}
+
   .toast{position:fixed;left:50%;bottom:calc(102px + env(safe-area-inset-bottom));
     transform:translateX(-50%) translateY(20px);background:var(--champagne);color:var(--nuit);
     font-weight:500;font-size:14px;padding:12px 22px;border-radius:999px;opacity:0;
@@ -263,7 +292,7 @@
     <div class="etape">
       <div class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
       <div><div class="tt">La musique, c'est vous</div>
-      <div class="dd">Ajoutez n'importe quelle chanson et votez ♥ : la plus aimée passe juste après le titre en cours.</div></div>
+      <div class="dd">Proposez n'importe quelle chanson : les ♥ la font monter, les 💔 la font descendre — et tout le monde voit qui a voté quoi. 😏 La mieux notée passe juste après le titre en cours.</div></div>
     </div>
     <div class="etape">
       <div class="ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
@@ -275,17 +304,29 @@
 
   <div class="carte-info" id="carte-install" style="display:none;max-width:360px;width:100%;text-align:left">
     <span class="ico" style="color:var(--champagne)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
-    <p id="texte-install"></p>
+    <div style="flex:1">
+      <p id="texte-install"></p>
+      <button class="btn-mini" id="btn-tuto-install" style="margin-top:10px">Voir le pas-à-pas en images</button>
+    </div>
   </div>
   <input class="champ" id="accueil-prenom" placeholder="Votre prénom" maxlength="40" autocomplete="given-name">
   <button class="btn-or" id="btn-entrer">Entrer dans la soirée 🥂</button>
   <p class="note">Pas de compte, pas d'inscription — juste votre prénom.</p>
 </div>
 
+<div class="tuto" id="tuto">
+  <h3 id="tuto-titre"></h3>
+  <div class="visuel" id="tuto-visuel"></div>
+  <p class="texte" id="tuto-texte"></p>
+  <div class="points" id="tuto-points"></div>
+  <button class="btn-or" id="tuto-suivant">Suivant</button>
+  <button class="passer" id="tuto-passer">Passer</button>
+</div>
+
 <header>
   <p class="eyebrow">Noces d'étain · 10 ans</p>
   <h1>Audrey &amp; Ludo</h1>
-  <p class="sous-titre" id="sous-titre">Ajoutez vos chansons, votez ♥ pour les faire remonter</p>
+  <p class="sous-titre" id="sous-titre">Proposez vos chansons — ♥ fait monter, 💔 fait descendre</p>
   <div class="filet"></div>
 </header>
 
@@ -298,7 +339,7 @@
     <div class="barre"><div id="np-barre"></div></div>
   </section>
 
-  <p class="section-titre">À suivre — la plus aimée passe en premier</p>
+  <p class="section-titre">À suivre — la mieux notée passe en premier</p>
   <div class="carte-info" id="bandeau-pause" style="display:none">
     <span class="ico" style="color:var(--champagne)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></span>
     <p><b>Les demandes sont en pause</b> le temps d'un moment spécial. Vous pouvez toujours voter ♥ — tout rouvre très vite !</p>
@@ -395,6 +436,8 @@ function img(u){return u ? '<img src="'+u+'" alt="">' : '<div class="pochette"><
 function monPrenom(){ return localStorage.getItem('prenom') || 'Un invité'; }
 function svgCoeur(plein,taille){taille=taille||16;
   return '<svg viewBox="0 0 24 24" width="'+taille+'" height="'+taille+'" fill="'+(plein?'currentColor':'none')+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>';}
+function svgBrise(taille){taille=taille||16;
+  return '<svg viewBox="0 0 24 24" width="'+taille+'" height="'+taille+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/><polyline points="12 6 10 9 13.5 11.5 11.5 15"/></svg>';}
 function initiale(nom){ return (nom||'?').trim().charAt(0).toUpperCase(); }
 function ilYa(dateIso){
   const min = Math.max(0, Math.round((Date.now()-new Date(dateIso))/60000));
@@ -410,12 +453,18 @@ $('btn-entrer').onclick = ()=>{
   const prenom = $('accueil-prenom').value.trim();
   if(!prenom){ toast('Dites-nous votre prénom !'); $('accueil-prenom').focus(); return; }
   localStorage.setItem('prenom', prenom);
+  api('/api/bonjour',{method:'POST',body:JSON.stringify({prenom})});
   $('accueil').classList.add('ferme');
-  toast('Bienvenue '+prenom+' ! 🥂');
+  if(!localStorage.getItem('tutoVu')){
+    ouvrirTuto(TUTO_FONCTIONS, ()=>{ localStorage.setItem('tutoVu','1'); toast('Bienvenue '+prenom+' ! 🥂'); });
+  } else {
+    toast('Bienvenue '+prenom+' ! 🥂');
+  }
 };
 $('accueil-prenom').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btn-entrer').click(); });
 $('lien-aide').onclick = ()=>{
   $('accueil-prenom').value = localStorage.getItem('prenom') || '';
+  localStorage.removeItem('tutoVu'); // pour rejouer le tutoriel après l'accueil
   $('accueil').classList.remove('ferme');
 };
 
@@ -437,13 +486,155 @@ $('lien-aide').onclick = ()=>{
   }
 })();
 
+/* Signaler sa présence à chaque ouverture (registre des mariés) */
+if(localStorage.getItem('prenom')){
+  api('/api/bonjour',{method:'POST',body:JSON.stringify({prenom: localStorage.getItem('prenom')})});
+}
+
+/* ================= Tutoriels en images ================= */
+const COEUR_D = 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z';
+const SVG_DEBUT = '<svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-linecap="round" stroke-linejoin="round">';
+
+const ILLU = {
+  recherche: SVG_DEBUT+
+    '<rect x="18" y="14" width="184" height="30" rx="15" stroke="#8d93a1"/>'+
+    '<circle cx="36" cy="29" r="6" stroke="#8d93a1"/><line x1="41" y1="34" x2="45" y2="38" stroke="#8d93a1" stroke-width="2"/>'+
+    '<text x="54" y="33" fill="#8d93a1" font-size="12" stroke="none" font-family="sans-serif">Titre, artiste…</text>'+
+    '<rect x="18" y="62" width="184" height="46" rx="12" fill="rgba(230,196,126,.05)" stroke="#383b45"/>'+
+    '<rect x="28" y="72" width="26" height="26" rx="6" fill="#2a2d37" stroke="none"/>'+
+    '<text x="64" y="84" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">Votre chanson préférée</text>'+
+    '<text x="64" y="98" fill="#8d93a1" font-size="9" stroke="none" font-family="sans-serif">N&#39;importe laquelle !</text>'+
+    '<circle cx="182" cy="85" r="13" stroke="#e6c47e" stroke-width="2"/>'+
+    '<line x1="182" y1="79" x2="182" y2="91" stroke="#e6c47e" stroke-width="2"/><line x1="176" y1="85" x2="188" y2="85" stroke="#e6c47e" stroke-width="2"/></svg>',
+  votes: SVG_DEBUT+
+    '<rect x="10" y="22" width="200" height="60" rx="12" fill="rgba(230,196,126,.05)" stroke="#e6c47e" stroke-opacity=".5"/>'+
+    '<rect x="20" y="34" width="26" height="26" rx="6" fill="#2a2d37" stroke="none"/>'+
+    '<text x="56" y="46" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">La chanson de Dédé</text>'+
+    '<text x="56" y="60" fill="#8d93a1" font-size="9" stroke="none" font-family="sans-serif">proposée par Dédé</text>'+
+    '<g transform="translate(128,36)"><rect width="34" height="34" rx="9" stroke="#e6c47e"/><g transform="translate(9,5) scale(0.66)"><path d="'+COEUR_D+'" fill="#e6c47e" stroke="#e6c47e"/></g><text x="17" y="31" fill="#e6c47e" font-size="8" stroke="none" text-anchor="middle" font-family="sans-serif">4</text></g>'+
+    '<g transform="translate(168,36)"><rect width="34" height="34" rx="9" stroke="#b57682"/><g transform="translate(9,5) scale(0.66)"><path d="'+COEUR_D+'" stroke="#b57682" stroke-width="2"/><polyline points="12 6 10 9 13.5 11.5 11.5 15" stroke="#b57682" stroke-width="2"/></g><text x="17" y="31" fill="#b57682" font-size="8" stroke="none" text-anchor="middle" font-family="sans-serif">7</text></g>'+
+    '<text x="20" y="103" fill="#e6c47e" font-size="10" stroke="none" font-family="sans-serif">&#9829; Céline, Marc</text>'+
+    '<text x="112" y="103" fill="#b57682" font-size="10" stroke="none" font-family="sans-serif">&#128148; Sophie, Jeanne +5</text></svg>',
+  playlist: SVG_DEBUT+
+    '<rect x="18" y="12" width="184" height="26" rx="9" fill="rgba(230,196,126,.05)" stroke="#383b45"/>'+
+    '<rect x="18" y="44" width="184" height="26" rx="9" fill="rgba(230,196,126,.05)" stroke="#383b45"/>'+
+    '<text x="30" y="29" fill="#f4f1ea" font-size="10" stroke="none" font-family="sans-serif">Prochain titre des mariés</text>'+
+    '<text x="30" y="61" fill="#f4f1ea" font-size="10" stroke="none" font-family="sans-serif">Puis celui-là…</text>'+
+    '<rect x="18" y="82" width="184" height="30" rx="15" stroke="#e6c47e" stroke-dasharray="5 4"/>'+
+    '<text x="110" y="101" fill="#e6c47e" font-size="11" stroke="none" text-anchor="middle" font-family="sans-serif">Voir toute la playlist &#9662;</text></svg>',
+  photo: SVG_DEBUT+
+    '<rect x="42" y="8" width="136" height="86" rx="12" fill="#2a2d37" stroke="#383b45"/>'+
+    '<circle cx="88" cy="36" r="10" stroke="#e6c47e"/>'+
+    '<path d="M52 84 L84 54 L104 72 L122 58 L168 84 Z" fill="#383b45" stroke="none"/>'+
+    '<g transform="translate(52,100) scale(0.75)"><path d="'+COEUR_D+'" fill="#e6c47e" stroke="#e6c47e"/></g>'+
+    '<text x="76" y="115" fill="#e6c47e" font-size="10" stroke="none" font-family="sans-serif">12</text>'+
+    '<rect x="96" y="100" width="82" height="18" rx="9" stroke="#8d93a1"/>'+
+    '<text x="104" y="112" fill="#8d93a1" font-size="9" stroke="none" font-family="sans-serif">Un petit mot…</text></svg>',
+  iosPartager: SVG_DEBUT+
+    '<rect x="30" y="10" width="160" height="104" rx="16" stroke="#8d93a1"/>'+
+    '<line x1="46" y1="98" x2="80" y2="98" stroke="#383b45" stroke-width="3"/>'+
+    '<line x1="140" y1="98" x2="174" y2="98" stroke="#383b45" stroke-width="3"/>'+
+    '<circle cx="110" cy="96" r="16" stroke="#e6c47e" stroke-width="2"/>'+
+    '<rect x="103" y="92" width="14" height="11" rx="2" stroke="#e6c47e" stroke-width="2"/>'+
+    '<line x1="110" y1="97" x2="110" y2="84" stroke="#e6c47e" stroke-width="2"/>'+
+    '<polyline points="106 88 110 84 114 88" stroke="#e6c47e" stroke-width="2"/>'+
+    '<text x="110" y="34" fill="#8d93a1" font-size="10" stroke="none" text-anchor="middle" font-family="sans-serif">En bas de Safari,</text>'+
+    '<text x="110" y="48" fill="#f4f1ea" font-size="11" stroke="none" text-anchor="middle" font-family="sans-serif">touchez Partager</text>'+
+    '<polyline points="110 60 110 72" stroke="#e6c47e" stroke-width="2"/><polyline points="105 67 110 73 115 67" stroke="#e6c47e" stroke-width="2"/></svg>',
+  iosMenu: SVG_DEBUT+
+    '<rect x="30" y="8" width="160" height="30" rx="8" stroke="#383b45"/>'+
+    '<text x="42" y="27" fill="#8d93a1" font-size="10" stroke="none" font-family="sans-serif">Copier</text>'+
+    '<rect x="30" y="46" width="160" height="34" rx="8" fill="rgba(230,196,126,.08)" stroke="#e6c47e"/>'+
+    '<text x="42" y="67" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">Sur l&#39;écran d&#39;accueil</text>'+
+    '<rect x="158" y="54" width="18" height="18" rx="4" stroke="#e6c47e" stroke-width="2"/>'+
+    '<line x1="167" y1="58" x2="167" y2="68" stroke="#e6c47e" stroke-width="2"/><line x1="162" y1="63" x2="172" y2="63" stroke="#e6c47e" stroke-width="2"/>'+
+    '<rect x="30" y="88" width="160" height="30" rx="8" stroke="#383b45"/>'+
+    '<text x="42" y="107" fill="#8d93a1" font-size="10" stroke="none" font-family="sans-serif">Ajouter aux favoris</text></svg>',
+  androidMenu: SVG_DEBUT+
+    '<rect x="30" y="10" width="160" height="30" rx="8" stroke="#8d93a1"/>'+
+    '<text x="42" y="29" fill="#8d93a1" font-size="10" stroke="none" font-family="sans-serif">nos-10-ans-dj…</text>'+
+    '<circle cx="172" cy="20" r="1.8" fill="#e6c47e" stroke="none"/><circle cx="172" cy="25" r="1.8" fill="#e6c47e" stroke="none"/><circle cx="172" cy="30" r="1.8" fill="#e6c47e" stroke="none"/>'+
+    '<circle cx="172" cy="25" r="12" stroke="#e6c47e"/>'+
+    '<rect x="42" y="58" width="160" height="34" rx="8" fill="rgba(230,196,126,.08)" stroke="#e6c47e"/>'+
+    '<text x="54" y="79" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">Ajouter à l&#39;écran d&#39;accueil</text>'+
+    '<polyline points="166 44 172 52 178 44" stroke="#e6c47e" stroke-width="2"/></svg>',
+  icone: SVG_DEBUT+
+    '<g stroke="none" fill="#2a2d37"><rect x="30" y="20" width="34" height="34" rx="9"/><rect x="74" y="20" width="34" height="34" rx="9"/><rect x="118" y="20" width="34" height="34" rx="9"/><rect x="30" y="64" width="34" height="34" rx="9"/><rect x="118" y="64" width="34" height="34" rx="9"/><rect x="162" y="64" width="34" height="34" rx="9"/></g>'+
+    '<rect x="162" y="20" width="34" height="34" rx="9" fill="#15161c" stroke="#e6c47e" stroke-width="2"/>'+
+    '<circle cx="179" cy="37" r="12" fill="#0c0d10" stroke="none"/><circle cx="179" cy="37" r="6" fill="#e6c47e" stroke="none"/>'+
+    '<text x="74" y="80" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">L&#39;appli est installée !</text>'+
+    '<text x="74" y="96" fill="#8d93a1" font-size="9" stroke="none" font-family="sans-serif">Ouvrez-la depuis cette icône.</text></svg>',
+};
+
+const TUTO_FONCTIONS = [
+  {titre:"La musique, c'est vous", visuel:ILLU.recherche,
+   texte:"Cherchez n'importe quelle chanson et proposez-la avec ＋ : elle rejoint la liste d'attente de la soirée."},
+  {titre:"♥ fait monter, 💔 fait descendre", visuel:ILLU.votes,
+   texte:"Votez sur les chansons proposées : la mieux notée passe juste après le titre en cours. Et tout le monde voit qui a voté quoi… 😏"},
+  {titre:"La playlist d'Audrey & Ludo", visuel:ILLU.playlist,
+   texte:"Regardez ce qui arrive ensuite, dépliez la playlist des mariés, et faites remonter un titre avec ＋ s'il vous fait envie."},
+  {titre:"Le livre d'or, c'est vos photos", visuel:ILLU.photo,
+   texte:"Partagez vos photos de la soirée, likez celles des autres et laissez des petits mots : tout sera offert à Audrey & Ludo."},
+];
+
+function slidesInstall(){
+  const ua = navigator.userAgent;
+  if(/iPhone|iPad|iPod/.test(ua)) return [
+    {titre:"1 · Ouvrez le menu Partager", visuel:ILLU.iosPartager,
+     texte:"Dans Safari, touchez l'icône Partager (le carré avec une flèche), en bas au centre de l'écran."},
+    {titre:"2 · « Sur l'écran d'accueil »", visuel:ILLU.iosMenu,
+     texte:"Faites défiler le menu et touchez « Sur l'écran d'accueil », puis « Ajouter » en haut à droite."},
+    {titre:"3 · C'est installé !", visuel:ILLU.icone,
+     texte:"L'icône A&L apparaît sur votre écran d'accueil : ouvrez toujours l'appli depuis là, en plein écran, toute la soirée."},
+  ];
+  if(/Android/.test(ua)) return [
+    {titre:"1 · Ouvrez le menu de Chrome", visuel:ILLU.androidMenu,
+     texte:"Touchez les trois points ⋮ en haut à droite de Chrome."},
+    {titre:"2 · « Ajouter à l'écran d'accueil »", visuel:ILLU.androidMenu,
+     texte:"Dans le menu, choisissez « Ajouter à l'écran d'accueil » puis confirmez."},
+    {titre:"3 · C'est installé !", visuel:ILLU.icone,
+     texte:"L'icône A&L apparaît sur votre écran d'accueil : ouvrez toujours l'appli depuis là, en plein écran, toute la soirée."},
+  ];
+  return null;
+}
+
+let tutoDiapos = [], tutoIndex = 0, tutoFin = null;
+function ouvrirTuto(diapos, fin, boutonFinal){
+  if(!diapos || !diapos.length) return;
+  tutoDiapos = diapos; tutoIndex = 0; tutoFin = fin || null;
+  $('tuto').dataset.final = boutonFinal || "C'est parti 🥂";
+  montrerDiapo();
+  $('tuto').classList.add('ouvert');
+}
+function montrerDiapo(){
+  const d = tutoDiapos[tutoIndex];
+  $('tuto-titre').textContent = d.titre;
+  $('tuto-visuel').innerHTML = d.visuel;
+  $('tuto-texte').textContent = d.texte;
+  $('tuto-points').innerHTML = tutoDiapos.map((_,i)=>
+    '<span'+(i===tutoIndex?' class="actif"':'')+'></span>').join('');
+  $('tuto-suivant').textContent = tutoIndex === tutoDiapos.length-1
+    ? $('tuto').dataset.final : 'Suivant';
+}
+function fermerTuto(){
+  $('tuto').classList.remove('ouvert');
+  if(tutoFin) tutoFin();
+}
+$('tuto-suivant').onclick = ()=>{
+  if(tutoIndex < tutoDiapos.length-1){ tutoIndex++; montrerDiapo(); }
+  else fermerTuto();
+};
+$('tuto-passer').onclick = fermerTuto;
+
+$('btn-tuto-install').onclick = ()=> ouvrirTuto(slidesInstall(), null, "J'ai compris");
+
 /* ================= Navigation à deux niveaux ================= */
 const UNIVERS = {
   'page-soiree':'page-soiree',
   'page-livredor':'page-livredor',
 };
 const SOUS_TITRES = {
-  'page-soiree':'Ajoutez vos chansons, votez ♥ pour les faire remonter',
+  'page-soiree':'Proposez vos chansons — ♥ fait monter, 💔 fait descendre',
   'page-livredor':'Partagez vos photos et vos petits mots',
 };
 function montrer(pageId){
@@ -483,9 +674,17 @@ function afficherFile(queue){
         '<div class="piste'+(i===0?' suivante':'')+'">' + img(x.image) +
           '<div class="infos">' +
             (i===0 ? '<div class="badge-suivante">Prochaine chanson</div>' : '') +
-            '<div class="t">'+esc(x.title)+'</div><div class="a">'+esc(x.artists)+'</div></div>' +
-          '<button class="btn-vote'+(x.jaiVote?' vote':'')+'" data-uri="'+x.uri+'" aria-label="Voter pour '+esc(x.title)+'">' +
-            '<span class="coeur">'+svgCoeur(x.jaiVote)+'</span><span class="nb">'+x.votes+'</span></button>' +
+            '<div class="t">'+esc(x.title)+'</div><div class="a">'+esc(x.artists)+'</div>' +
+            '<div class="votants">par <b>'+esc(x.proposePar)+'</b>' +
+              (x.pour ? ' · <span class="p">'+svgCoeur(true,10)+' '+esc(x.pourNoms)+'</span>' : '') +
+              (x.contre ? ' · <span class="c">'+svgBrise(10)+' '+esc(x.contreNoms)+'</span>' : '') +
+            '</div></div>' +
+          '<div class="col-votes">' +
+            '<button class="btn-vote'+(x.monVote==='pour'?' vote':'')+'" data-uri="'+x.uri+'" data-sens="pour" aria-label="Faire monter '+esc(x.title)+'">' +
+              '<span class="coeur">'+svgCoeur(x.monVote==='pour')+'</span><span class="nb">'+x.pour+'</span></button>' +
+            '<button class="btn-vote'+(x.monVote==='contre'?' vote-contre':'')+'" data-uri="'+x.uri+'" data-sens="contre" aria-label="Faire descendre '+esc(x.title)+'">' +
+              '<span class="coeur">'+svgBrise()+'</span><span class="nb">'+x.contre+'</span></button>' +
+          '</div>' +
         '</div>').join('')
     : '<p class="vide">La liste est vide — à vous de jouer !</p>';
 }
@@ -503,7 +702,8 @@ async function majFile(){
 }
 $('file').addEventListener('click', async e=>{
   const b = e.target.closest('.btn-vote'); if(!b) return;
-  const {ok, data:d} = await api('/api/vote', {method:'POST', body:JSON.stringify({uri:b.dataset.uri})});
+  const {ok, data:d} = await api('/api/vote', {method:'POST',
+    body:JSON.stringify({uri:b.dataset.uri, sens:b.dataset.sens})});
   if(ok) afficherFile(d.queue||[]);
   else toast(d.error || 'Oups, réessayez.');
 });

@@ -10,7 +10,12 @@
         --etain:#b9bec7;--etain-sombre:#7d828c;--champagne:#d8b770}
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:var(--nuit);color:var(--ivoire);font-family:'Jost',system-ui,sans-serif;
-       font-weight:300;min-height:100dvh;padding:28px 20px 48px;max-width:520px;margin:0 auto}
+       font-weight:300;min-height:100dvh;
+       padding:calc(28px + env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom));
+       max-width:520px;margin:0 auto}
+  body::after{content:"";position:fixed;top:0;left:0;right:0;
+    height:env(safe-area-inset-top);z-index:60;pointer-events:none;
+    background:rgba(21,22,28,.85);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
   h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:32px;text-align:center}
   .intro{color:var(--etain);font-size:14px;text-align:center;margin-top:6px}
   .etat{margin:20px 0;padding:12px;border-radius:12px;font-size:14px;text-align:center}
@@ -34,6 +39,15 @@
   .vide{color:var(--etain-sombre);font-size:14px;text-align:center;padding:14px}
   #qr{margin:16px auto 8px;width:200px;height:200px;background:#fff;padding:10px;border-radius:12px;display:none}
   #url-invites{font-size:13px;color:var(--champagne);word-break:break-all;text-align:center}
+  .inv{display:flex;justify-content:space-between;gap:10px;padding:9px 4px;
+    border-bottom:1px solid #2a2d37;font-size:14px}
+  .inv .quand{color:var(--etain-sombre);font-size:12.5px;white-space:nowrap}
+  .galerie-admin{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .galerie-admin .ph{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;
+    cursor:pointer;border:1px solid #383b45;background:var(--carte-2)}
+  .galerie-admin img{width:100%;height:100%;object-fit:cover;display:block}
+  .galerie-admin .qui{position:absolute;bottom:2px;left:4px;right:4px;font-size:10px;color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .btn-secondaire{display:block;width:100%;background:none;border:1px solid #383b45;color:var(--etain);
     font-family:inherit;font-size:14px;padding:12px;border-radius:999px;cursor:pointer;margin-top:26px}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
@@ -53,10 +67,18 @@
 
 <div id="zone-connecte" style="display:none">
 
+  <p class="section-titre">Vos invités connectés</p>
+  <p class="vide" id="invites-total" style="padding:0 0 8px"></p>
+  <div id="invites-liste"></div>
+
   <p class="section-titre">Demandes des invités</p>
   <button class="btn" id="btn-pause" style="margin-bottom:10px">…</button>
   <div id="file-admin"><p class="vide">Chargement…</p></div>
   <button class="btn-secondaire" id="btn-vider">Vider toute la liste d'attente</button>
+
+  <p class="section-titre">Livre d'or — appuyez sur une photo pour la supprimer</p>
+  <div class="galerie-admin" id="photos-admin"><p class="vide">Chargement…</p></div>
+  <button class="btn-secondaire" id="btn-rafraichir-photos">Actualiser les photos</button>
 
   <p class="section-titre">Vos playlists — appuyez pour lancer</p>
   <p class="vide" style="padding:0 0 10px">💡 Ouvrez d'abord Spotify sur l'ordinateur et jouez n'importe quel titre une fois, pour que l'appareil soit actif.</p>
@@ -109,6 +131,8 @@ async function verifier(){
     $('url-invites').textContent = 'Page invités : ' + url;
     chargerPlaylists();
     chargerEtat();
+    chargerPhotosAdmin();
+    chargerInvites();
   }else{
     $('etat').textContent = 'Spotify n\'est pas encore connecté.';
     $('etat').className = 'etat ko';
@@ -122,7 +146,7 @@ async function chargerPlaylists(){
         '<div class="pl">'+
           (p.image?'<img src="'+p.image+'" alt="">':'<img alt="">')+
           '<div class="infos"><div class="t">'+esc(p.name)+'</div>'+
-          '<div class="a">'+p.total+' titres'+(p.invite?' · <span class="badge">créée par un invité</span>':'')+'</div></div>'+
+          '<div class="a">'+(p.total!=null?p.total+' titre'+(p.total>1?'s':''):'Playlist Spotify')+'</div></div>'+
           '<button class="btn-jouer" data-uri="'+p.uri+'">▶ Lancer</button></div>').join('')
     : '<p class="vide">Aucune playlist trouvée sur votre compte.</p>';
 }
@@ -143,7 +167,7 @@ async function chargerEtat(){
         '<div class="pl">'+
           (t.image?'<img src="'+t.image+'" alt="">':'<img alt="">')+
           '<div class="infos"><div class="t">'+esc(t.title)+'</div>'+
-          '<div class="a">'+esc(t.artists)+' · ♥ '+t.votes+'</div></div>'+
+          '<div class="a">'+esc(t.artists)+' · ♥ '+t.pour+' · 💔 '+t.contre+' · par '+esc(t.proposePar)+'</div></div>'+
           '<button class="btn-jouer" data-retirer="'+t.uri+'" aria-label="Retirer '+esc(t.title)+'">✕</button></div>').join('')
     : '<p class="vide">Aucune demande en attente.</p>';
 }
@@ -178,6 +202,48 @@ $('btn-vider').onclick = async ()=>{
   await apiAdmin('/api/admin/clear-queue',{method:'POST'});
   toast('Liste d\'attente vidée.');
 };
+
+/* ---- Registre des invités connectés ---- */
+function ilYaMin(ts){
+  const m = Math.round((Date.now()-ts)/60000);
+  return m<1 ? 'actif à l\'instant' : m<60 ? 'actif il y a '+m+' min' : 'actif il y a '+Math.round(m/60)+' h';
+}
+async function chargerInvites(){
+  const r = await apiAdmin('/api/admin/invites');
+  if(!r.ok) return;
+  const d = await r.json();
+  $('invites-total').textContent = d.total
+    ? '🥂 '+d.total+' invité'+(d.total>1?'s ont':' a')+' ouvert l\'appli'
+    : 'Personne pour l\'instant — le QR code les attend !';
+  $('invites-liste').innerHTML = (d.invites||[]).map(i=>
+    '<div class="inv"><span>'+esc(i.prenom)+'</span>'+
+    '<span class="quand">arrivé '+new Date(i.firstSeen).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+
+    ' · '+ilYaMin(i.lastSeen)+'</span></div>').join('');
+}
+setInterval(chargerInvites, 30000);
+
+/* ---- Livre d'or : suppression de photos ---- */
+async function chargerPhotosAdmin(){
+  const d = await (await fetch('/api/livredor')).json();
+  const photos = d.photos || [];
+  $('photos-admin').innerHTML = photos.length
+    ? photos.map(p=>
+        '<div class="ph" data-id="'+esc(p.id)+'" title="Supprimer cette photo">'+
+          '<img src="'+p.thumb+'" alt="" loading="lazy">'+
+          '<span class="qui">'+esc(p.author)+'</span></div>').join('')
+    : '<p class="vide">Aucune photo dans le livre d\'or.</p>';
+}
+
+$('photos-admin').addEventListener('click', async e=>{
+  const ph = e.target.closest('.ph'); if(!ph) return;
+  if(!confirm('Supprimer définitivement cette photo (et ses petits mots) ?')) return;
+  const r = await apiAdmin('/api/admin/photo-supprimer',{method:'POST',
+    body:JSON.stringify({id: ph.dataset.id})});
+  if(r.ok){ toast('🗑️ Photo supprimée.'); ph.remove(); }
+  else{ const d = await r.json().catch(()=>({})); toast(d.error || 'Suppression impossible.'); }
+});
+
+$('btn-rafraichir-photos').onclick = chargerPhotosAdmin;
 
 verifier();
 </script>
