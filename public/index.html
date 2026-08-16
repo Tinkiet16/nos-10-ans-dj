@@ -35,7 +35,8 @@
     outline:2px solid var(--champagne);outline-offset:2px}
   body{background:var(--nuit);color:var(--ivoire);font-family:'Jost',system-ui,sans-serif;
     font-weight:300;min-height:100dvh;
-    padding:0 20px calc(92px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
+    padding:env(safe-area-inset-top) 20px calc(110px + env(safe-area-inset-bottom));
+    max-width:520px;margin:0 auto}
   header{padding:30px 0 18px;text-align:center}
   .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--champagne);font-weight:500}
   h1{font-family:'Great Vibes','Cormorant Garamond',cursive;font-weight:400;
@@ -205,13 +206,14 @@
   .visionneuse .com{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;
     margin-top:18px;max-width:360px;line-height:1.3}
   .visionneuse .aut{color:var(--champagne);font-size:13px;margin-top:8px}
-  .visionneuse .fermer{position:absolute;top:18px;right:18px;background:var(--carte);
+  .visionneuse .fermer{position:absolute;top:calc(14px + env(safe-area-inset-top));right:18px;background:var(--carte);
     border:1px solid #383b45;color:var(--ivoire);width:40px;height:40px;border-radius:50%;
     font-size:18px;cursor:pointer}
 
   /* ---- Accueil ---- */
   .accueil{position:fixed;inset:0;background:var(--nuit);z-index:20;overflow-y:auto;
-    padding:48px 24px 32px;display:flex;flex-direction:column;align-items:center;text-align:center}
+    padding:calc(40px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;align-items:center;text-align:center}
   .accueil.ferme{display:none}
   .accueil .vinyle-acc{width:110px;height:110px;border-radius:50%;margin-bottom:22px;
     background:radial-gradient(circle at 50% 50%, transparent 0 29%, #0c0d10 29% 100%),
@@ -239,7 +241,7 @@
   .lien-aide{background:none;border:none;color:var(--etain-sombre);font-family:inherit;
     font-size:12px;cursor:pointer;text-decoration:underline;margin-top:8px}
 
-  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));
+  .toast{position:fixed;left:50%;bottom:calc(102px + env(safe-area-inset-bottom));
     transform:translateX(-50%) translateY(20px);background:var(--champagne);color:var(--nuit);
     font-weight:500;font-size:14px;padding:12px 22px;border-radius:999px;opacity:0;
     pointer-events:none;transition:opacity .25s,transform .25s;max-width:90vw;text-align:center;z-index:40}
