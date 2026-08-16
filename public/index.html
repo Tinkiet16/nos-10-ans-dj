@@ -47,6 +47,8 @@
      font-size:clamp(46px,12vw,58px);line-height:1.05;margin-top:6px;
      color:var(--champagne);text-shadow:0 0 26px rgba(230,196,126,.35)}
   .sous-titre{color:var(--etain);font-size:14px;margin-top:8px}
+  .compteur{color:var(--champagne);font-size:12.5px;margin-top:10px;
+    letter-spacing:.06em}
   .filet{width:84px;height:1px;margin:18px auto 0;
     background:linear-gradient(90deg,transparent,rgba(230,196,126,.7),transparent)}
 
@@ -327,6 +329,7 @@
   <p class="eyebrow">Noces d'étain · 10 ans</p>
   <h1>Audrey &amp; Ludo</h1>
   <p class="sous-titre" id="sous-titre">Proposez vos chansons — ♥ fait monter, 💔 fait descendre</p>
+  <p class="compteur" id="compteur" style="display:none"></p>
   <div class="filet"></div>
 </header>
 
@@ -502,19 +505,19 @@ const ILLU = {
     '<text x="54" y="33" fill="#8d93a1" font-size="12" stroke="none" font-family="sans-serif">Titre, artiste…</text>'+
     '<rect x="18" y="62" width="184" height="46" rx="12" fill="rgba(230,196,126,.05)" stroke="#383b45"/>'+
     '<rect x="28" y="72" width="26" height="26" rx="6" fill="#2a2d37" stroke="none"/>'+
-    '<text x="64" y="84" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">Votre chanson préférée</text>'+
+    '<text x="64" y="84" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">Votre chanson</text>'+
     '<text x="64" y="98" fill="#8d93a1" font-size="9" stroke="none" font-family="sans-serif">N&#39;importe laquelle !</text>'+
     '<circle cx="182" cy="85" r="13" stroke="#e6c47e" stroke-width="2"/>'+
     '<line x1="182" y1="79" x2="182" y2="91" stroke="#e6c47e" stroke-width="2"/><line x1="176" y1="85" x2="188" y2="85" stroke="#e6c47e" stroke-width="2"/></svg>',
   votes: SVG_DEBUT+
     '<rect x="10" y="22" width="200" height="60" rx="12" fill="rgba(230,196,126,.05)" stroke="#e6c47e" stroke-opacity=".5"/>'+
     '<rect x="20" y="34" width="26" height="26" rx="6" fill="#2a2d37" stroke="none"/>'+
-    '<text x="56" y="46" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">La chanson de Dédé</text>'+
-    '<text x="56" y="60" fill="#8d93a1" font-size="9" stroke="none" font-family="sans-serif">proposée par Dédé</text>'+
-    '<g transform="translate(128,36)"><rect width="34" height="34" rx="9" stroke="#e6c47e"/><g transform="translate(9,5) scale(0.66)"><path d="'+COEUR_D+'" fill="#e6c47e" stroke="#e6c47e"/></g><text x="17" y="31" fill="#e6c47e" font-size="8" stroke="none" text-anchor="middle" font-family="sans-serif">4</text></g>'+
-    '<g transform="translate(168,36)"><rect width="34" height="34" rx="9" stroke="#b57682"/><g transform="translate(9,5) scale(0.66)"><path d="'+COEUR_D+'" stroke="#b57682" stroke-width="2"/><polyline points="12 6 10 9 13.5 11.5 11.5 15" stroke="#b57682" stroke-width="2"/></g><text x="17" y="31" fill="#b57682" font-size="8" stroke="none" text-anchor="middle" font-family="sans-serif">7</text></g>'+
+    '<text x="56" y="46" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">Titre de Dédé</text>'+
+    '<text x="56" y="60" fill="#8d93a1" font-size="9" stroke="none" font-family="sans-serif">proposé par Dédé</text>'+
+    '<g transform="translate(138,36)"><rect width="32" height="32" rx="9" stroke="#e6c47e"/><g transform="translate(4,10) scale(0.5)"><path d="'+COEUR_D+'" fill="#e6c47e" stroke="#e6c47e"/></g><text x="23" y="21" fill="#e6c47e" font-size="10" stroke="none" font-family="sans-serif">4</text></g>'+
+    '<g transform="translate(174,36)"><rect width="32" height="32" rx="9" stroke="#b57682"/><g transform="translate(4,10) scale(0.5)"><path d="'+COEUR_D+'" stroke="#b57682" stroke-width="2"/><polyline points="12 6 10 9 13.5 11.5 11.5 15" stroke="#b57682" stroke-width="2"/></g><text x="23" y="21" fill="#b57682" font-size="10" stroke="none" font-family="sans-serif">7</text></g>'+
     '<text x="20" y="103" fill="#e6c47e" font-size="10" stroke="none" font-family="sans-serif">&#9829; Céline, Marc</text>'+
-    '<text x="112" y="103" fill="#b57682" font-size="10" stroke="none" font-family="sans-serif">&#128148; Sophie, Jeanne +5</text></svg>',
+    '<text x="112" y="103" fill="#b57682" font-size="10" stroke="none" font-family="sans-serif">&#9829; Sophie, Jeanne +5</text></svg>',
   playlist: SVG_DEBUT+
     '<rect x="18" y="12" width="184" height="26" rx="9" fill="rgba(230,196,126,.05)" stroke="#383b45"/>'+
     '<rect x="18" y="44" width="184" height="26" rx="9" fill="rgba(230,196,126,.05)" stroke="#383b45"/>'+
@@ -559,11 +562,12 @@ const ILLU = {
     '<text x="54" y="79" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">Ajouter à l&#39;écran d&#39;accueil</text>'+
     '<polyline points="166 44 172 52 178 44" stroke="#e6c47e" stroke-width="2"/></svg>',
   icone: SVG_DEBUT+
-    '<g stroke="none" fill="#2a2d37"><rect x="30" y="20" width="34" height="34" rx="9"/><rect x="74" y="20" width="34" height="34" rx="9"/><rect x="118" y="20" width="34" height="34" rx="9"/><rect x="30" y="64" width="34" height="34" rx="9"/><rect x="118" y="64" width="34" height="34" rx="9"/><rect x="162" y="64" width="34" height="34" rx="9"/></g>'+
-    '<rect x="162" y="20" width="34" height="34" rx="9" fill="#15161c" stroke="#e6c47e" stroke-width="2"/>'+
-    '<circle cx="179" cy="37" r="12" fill="#0c0d10" stroke="none"/><circle cx="179" cy="37" r="6" fill="#e6c47e" stroke="none"/>'+
-    '<text x="74" y="80" fill="#f4f1ea" font-size="11" stroke="none" font-family="sans-serif">L&#39;appli est installée !</text>'+
-    '<text x="74" y="96" fill="#8d93a1" font-size="9" stroke="none" font-family="sans-serif">Ouvrez-la depuis cette icône.</text></svg>',
+    '<g stroke="none" fill="#2a2d37"><rect x="22" y="18" width="36" height="36" rx="9"/><rect x="69" y="18" width="36" height="36" rx="9"/><rect x="116" y="18" width="36" height="36" rx="9"/></g>'+
+    '<rect x="163" y="18" width="36" height="36" rx="9" fill="#15161c" stroke="#e6c47e" stroke-width="2"/>'+
+    '<circle cx="181" cy="36" r="12" fill="#0c0d10" stroke="none"/><circle cx="181" cy="36" r="6" fill="#e6c47e" stroke="none"/>'+
+    '<text x="181" y="66" fill="#e6c47e" font-size="8" stroke="none" text-anchor="middle" font-family="sans-serif">A&amp;L</text>'+
+    '<text x="110" y="92" fill="#f4f1ea" font-size="12" stroke="none" text-anchor="middle" font-family="sans-serif">L&#39;appli est installée !</text>'+
+    '<text x="110" y="110" fill="#8d93a1" font-size="10" stroke="none" text-anchor="middle" font-family="sans-serif">Ouvrez-la toujours depuis cette icône.</text></svg>',
 };
 
 const TUTO_FONCTIONS = [
@@ -937,6 +941,19 @@ $('btn-envoyer-photos').onclick = async ()=>{
     toast('L\'envoi a échoué — vérifiez votre connexion et réessayez.');
   }
 };
+
+/* ================= Compteur d'invités ================= */
+async function majCompteur(){
+  try{
+    const {data:d} = await api('/api/compteur');
+    if(d.total >= 1){
+      $('compteur').textContent = '🥂 ' + d.total + (d.total > 1 ? ' invités connectés' : ' invité connecté');
+      $('compteur').style.display = 'block';
+    }
+  }catch(e){}
+}
+majCompteur();
+setInterval(majCompteur, 60000);
 
 /* ================= Rafraîchissement ================= */
 majNowPlaying(); majFile();
