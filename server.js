@@ -57,8 +57,30 @@ app.set("trust proxy", 1); // HTTPS derrière le proxy de l'hébergeur
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// ---- Registre des invités connectés (le thermomètre de la soirée) ----------
+// { inviteId: { prenom, firstSeen, lastSeen } } — sauvegardé sur Cloudinary
+let invites = {};
+let invitesDirty = false;
+const INVITES_ID = "nos10ans-invites.json";
+
+app.use("/api", (req, res, next) => {
+  const id = String(req.headers["x-invite-id"] || "");
+  if (id && invites[id]) { invites[id].lastSeen = Date.now(); invitesDirty = true; }
+  next();
+});
+
+app.post("/api/bonjour", (req, res) => {
+  const id = String(req.headers["x-invite-id"] || "").slice(0, 64);
+  const prenom = String(req.body?.prenom || "").trim().slice(0, 40);
+  if (!id || !prenom) return res.json({ ok: false });
+  if (!invites[id]) invites[id] = { prenom, firstSeen: Date.now(), lastSeen: Date.now() };
+  else { invites[id].prenom = prenom; invites[id].lastSeen = Date.now(); }
+  invitesDirty = true;
+  res.json({ ok: true });
+});
+
 // ---- Liste d'attente des invités (en mémoire, le temps d'une soirée) ----
-// [{ uri, title, artists, image, votes, voters:[inviteId], addedAt }]
+// [{ uri, title, artists, image, addedBy, pour:[inviteId], contre:[inviteId], addedAt }]
 let queue = [];
 let demandesOuvertes = true; // l'hôte peut fermer pendant le dîner, les discours…
 
@@ -158,13 +180,26 @@ function mapTrack(t) {
 function inviteId(req) {
   return String(req.headers["x-invite-id"] || "anonyme").slice(0, 64);
 }
+function prenomDe(id) {
+  return invites[id]?.prenom || "Un invité";
+}
+function scoreDe(t) {
+  return t.pour.length - t.contre.length;
+}
+function capNoms(ids) {
+  const noms = ids.map(prenomDe);
+  return noms.slice(0, 3).join(", ") + (noms.length > 3 ? " +" + (noms.length - 3) : "");
+}
 function publicQueue(req) {
   const id = inviteId(req);
   return [...queue]
-    .sort((a, b) => b.votes - a.votes || a.addedAt - b.addedAt)
+    .sort((a, b) => scoreDe(b) - scoreDe(a) || a.addedAt - b.addedAt)
     .map(t => ({
       uri: t.uri, title: t.title, artists: t.artists, image: t.image,
-      votes: t.votes, jaiVote: t.voters.includes(id),
+      pour: t.pour.length, contre: t.contre.length,
+      monVote: t.pour.includes(id) ? "pour" : t.contre.includes(id) ? "contre" : null,
+      proposePar: prenomDe(t.addedBy),
+      pourNoms: capNoms(t.pour), contreNoms: capNoms(t.contre),
     }));
 }
 // ---- API invités : lecture en cours ------------------------------------
@@ -277,22 +312,21 @@ app.post("/api/queue", async (req, res) => {
   const id = uri.split(":")[2];
   const r = await spotify("/tracks/" + id);
   if (!r.body) return res.status(500).json({ error: "Titre introuvable." });
-  queue.push({ ...mapTrack(r.body), votes: 1, voters: [inviteId(req)], addedAt: Date.now() });
+  const qui = inviteId(req);
+  queue.push({ ...mapTrack(r.body), addedBy: qui, pour: [qui], contre: [], addedAt: Date.now() });
   res.json({ ok: true, queue: publicQueue(req) });
 });
 
 app.post("/api/vote", (req, res) => {
-  const { uri } = req.body || {};
+  const { uri, sens } = req.body || {};
   const id = inviteId(req);
   const t = queue.find(x => x.uri === uri);
   if (!t) return res.status(404).json({ error: "Ce titre n'est plus dans la liste." });
-  if (t.voters.includes(id)) {
-    t.voters = t.voters.filter(v => v !== id);
-    t.votes = Math.max(0, t.votes - 1);
-  } else {
-    t.voters.push(id);
-    t.votes++;
-  }
+  if (sens !== "pour" && sens !== "contre") return res.status(400).json({ error: "Vote invalide." });
+  const dejaLa = t[sens].includes(id);
+  t.pour = t.pour.filter(v => v !== id);
+  t.contre = t.contre.filter(v => v !== id);
+  if (!dejaLa) t[sens].push(id); // re-taper le même bouton annule son vote
   res.json({ ok: true, queue: publicQueue(req) });
 });
 
@@ -480,6 +514,38 @@ app.post("/api/admin/clear-queue", (req, res) => {
   res.json({ ok: true });
 });
 
+// Supprimer une photo du livre d'or (tests, photos indésirables…)
+app.post("/api/admin/photo-supprimer", async (req, res) => {
+  if (!adminOk(req)) return res.status(403).json({ error: "Code admin incorrect." });
+  if (!livredorActif) return res.status(503).json({ error: "Livre d'or non configuré." });
+  const id = String(req.body?.id || "");
+  if (!id) return res.status(400).json({ error: "Photo inconnue." });
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const params = { invalidate: "true", public_id: id, timestamp };
+    const toSign = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join("&") + cloudinary.api_secret;
+    const signature = crypto.createHash("sha1").update(toSign).digest("hex");
+    const r = await fetch(`https://api.cloudinary.com/v1_1/${cloudinary.cloud_name}/image/destroy`, {
+      method: "POST",
+      body: new URLSearchParams({
+        public_id: id, api_key: cloudinary.api_key,
+        timestamp: String(timestamp), signature, invalidate: "true",
+      }),
+    });
+    const body = await r.json();
+    if (body.result !== "ok" && body.result !== "not found") {
+      return res.status(500).json({ error: "Cloudinary a refusé la suppression." });
+    }
+    delete social[id];          // ses likes et petits mots partent avec
+    sauverSocial();
+    galerieCache = { at: 0, data: null }; // rafraîchir la galerie immédiatement
+    console.log(`🗑️ Photo supprimée du livre d'or : ${id}`);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Suppression impossible pour le moment." });
+  }
+});
+
 // Pause / reprise des demandes des invités (dîner, discours, pièce montée…)
 app.post("/api/admin/demandes", (req, res) => {
   if (!adminOk(req)) return res.status(403).json({ error: "Code admin incorrect." });
@@ -502,10 +568,57 @@ app.get("/api/admin/etat", (req, res) => {
   res.json({
     ouvert: demandesOuvertes,
     queue: [...queue]
-      .sort((a, b) => b.votes - a.votes || a.addedAt - b.addedAt)
-      .map(t => ({ uri: t.uri, title: t.title, artists: t.artists, image: t.image, votes: t.votes })),
+      .sort((a, b) => scoreDe(b) - scoreDe(a) || a.addedAt - b.addedAt)
+      .map(t => ({
+        uri: t.uri, title: t.title, artists: t.artists, image: t.image,
+        pour: t.pour.length, contre: t.contre.length, proposePar: prenomDe(t.addedBy),
+      })),
   });
 });
+
+// Le registre des invités connectés
+app.get("/api/admin/invites", (req, res) => {
+  if (!adminOk(req)) return res.status(403).json({ error: "Code admin incorrect." });
+  const liste = Object.values(invites)
+    .sort((a, b) => b.lastSeen - a.lastSeen)
+    .map(i => ({ prenom: i.prenom, firstSeen: i.firstSeen, lastSeen: i.lastSeen }));
+  res.json({ total: liste.length, invites: liste });
+});
+
+// Persistance du registre sur Cloudinary (chargé au démarrage, sauvé si changement)
+async function chargerInvites() {
+  if (!livredorActif) return;
+  try {
+    const r = await fetch(
+      `https://res.cloudinary.com/${cloudinary.cloud_name}/raw/upload/${INVITES_ID}?t=${Date.now()}`
+    );
+    if (r.ok) invites = await r.json();
+  } catch { /* premier démarrage */ }
+}
+chargerInvites();
+
+setInterval(async () => {
+  if (!invitesDirty || !livredorActif) return;
+  invitesDirty = false;
+  try {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const params = { invalidate: "true", overwrite: "true", public_id: INVITES_ID, timestamp };
+    const toSign = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join("&") + cloudinary.api_secret;
+    const signature = crypto.createHash("sha1").update(toSign).digest("hex");
+    await fetch(`https://api.cloudinary.com/v1_1/${cloudinary.cloud_name}/raw/upload`, {
+      method: "POST",
+      body: new URLSearchParams({
+        file: "data:application/json;base64," + Buffer.from(JSON.stringify(invites)).toString("base64"),
+        api_key: cloudinary.api_key,
+        timestamp: String(timestamp),
+        signature,
+        public_id: INVITES_ID,
+        overwrite: "true",
+        invalidate: "true",
+      }),
+    });
+  } catch { invitesDirty = true; /* on retentera */ }
+}, 20_000);
 
 // Pour l'hébergement en ligne : récupérer le refresh token à mettre
 // en variable d'environnement SPOTIFY_REFRESH_TOKEN (protégé par le code admin)
@@ -528,12 +641,12 @@ async function chefDOrchestre() {
     const { duration_ms, id: trackId } = r.body.item;
 
     if (duration_ms - progress_ms <= MARGE_FIN_MS && dernierEnvoiPour !== trackId) {
-      const [gagnante] = [...queue].sort((a, b) => b.votes - a.votes || a.addedAt - b.addedAt);
+      const [gagnante] = [...queue].sort((a, b) => scoreDe(b) - scoreDe(a) || a.addedAt - b.addedAt);
       const envoi = await spotify("/me/player/queue?uri=" + encodeURIComponent(gagnante.uri), { method: "POST" });
       if (envoi.status === 200 || envoi.status === 204) {
         dernierEnvoiPour = trackId;
         queue = queue.filter(t => t.uri !== gagnante.uri);
-        console.log(`🎶 Envoyée à Spotify : ${gagnante.title} — ${gagnante.artists} (${gagnante.votes} ♥)`);
+        console.log(`🎶 Envoyée à Spotify : ${gagnante.title} — ${gagnante.artists} (♥ ${gagnante.pour.length} / 💔 ${gagnante.contre.length})`);
       }
     }
   } catch { /* on réessaie au prochain tour */ }
