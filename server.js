@@ -581,6 +581,25 @@ app.get("/api/admin/etat", (req, res) => {
   });
 });
 
+// Diagnostic du lecteur : le mode d'échec n°1 du jour J est « aucun appareil
+// actif ». Autant que le pupitre le dise, plutôt que de le laisser deviner.
+// NOTE : l'API Spotify n'expose PAS le réglage de fondu enchaîné. Il reste
+// une case à cocher manuelle côté pupitre, jamais un voyant automatique.
+app.get("/api/admin/player", async (req, res) => {
+  if (!adminOk(req)) return res.status(403).json({ error: "Code admin incorrect." });
+  const r = await spotify("/me/player");
+  if (r.status === 204 || !r.body || !r.body.device) {
+    return res.json({ actif: false });
+  }
+  console.log("🎛️ diagnostic lecteur :", r.body.device.name || "inconnu");
+  res.json({
+    actif: true,
+    appareil: r.body.device.name || "Appareil inconnu",
+    type: r.body.device.type || null,
+    joue: Boolean(r.body.is_playing),
+  });
+});
+
 // Le registre des invités connectés
 app.get("/api/admin/invites", (req, res) => {
   if (!adminOk(req)) return res.status(403).json({ error: "Code admin incorrect." });

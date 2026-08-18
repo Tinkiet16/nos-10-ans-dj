@@ -108,13 +108,19 @@ Depuis **deux téléphones** (le vôtre + celui d'Audrey, en 4G) :
 - [ ] Scanner le QR code affiché sur la page admin → la page d'accueil "Bienvenue aux 10 ans d'Audrey & Ludo" s'affiche, prénom, entrée
 - [ ] La carte d'installation iPhone/Android s'affiche → installer l'appli sur l'écran d'accueil
 - [ ] Le vinyle affiche le titre en cours de lecture
-- [ ] Chercher une chanson, l'ajouter → elle apparaît dans la liste des deux téléphones
-- [ ] Voter ♥ depuis l'autre téléphone → le compteur monte partout
+- [ ] Page admin : le bandeau en haut affiche **✓ Appareil : … — lecture en cours**
+- [ ] Chercher une chanson, l'ajouter → elle apparaît dans la liste des deux téléphones,
+      avec déjà un ♥ (celui de la personne qui l'a proposée)
+- [ ] Voter ♥ depuis l'autre téléphone → le compteur monte partout ; **re-taper annule le vote**
+- [ ] Pendant que l'un vote, l'autre regarde : la liste ne doit pas se réordonner sous le doigt
 - [ ] Attendre la fin du morceau → la chanson votée passe automatiquement 🎉
-- [ ] Créer une playlist test dans l'onglet Playlists → elle apparaît sur la page admin
 - [ ] Livre d'or : envoyer 2 photos avec un petit mot → liker et commenter depuis l'autre téléphone
+- [ ] Commencer à écrire un petit mot, attendre 20 s sans valider → le texte ne doit pas disparaître
+- [ ] Couper la 4G d'un téléphone → un bandeau « Connexion perdue » apparaît ; la rétablir →
+      il disparaît tout seul, sans recharger la page
 - [ ] Page admin : mettre en pause → le bandeau apparaît chez les invités, les ajouts sont refusés → rouvrir
 - [ ] Page admin : retirer un titre avec ✕, lancer une autre playlist avec ▶
+- [ ] Page admin : supprimer une photo puis toucher **Annuler** → elle doit revenir
 
 Si tout coche : **vous êtes prêts.** Sinon, voir Dépannage plus bas.
 
@@ -129,7 +135,10 @@ Si tout coche : **vous êtes prêts.** Sinon, voir Dépannage plus bas.
 **H-1 (arrivée dans la salle)**
 1. Téléphone de Ludo : activer le partage de connexion. Connecter l'ordinateur dessus. Brancher les deux sur secteur.
 2. Ouvrir Spotify sur l'ordi, lancer la playlist d'accueil.
-3. Sur votre téléphone : ouvrir la page admin (réveille le serveur) → vérifier "✓ Spotify connecté" et que le vinyle suit.
+3. Sur votre téléphone : ouvrir la page admin (réveille le serveur). Le bandeau en haut vous
+   dit tout : **✓ Appareil : … — lecture en cours**. S'il affiche « Aucun appareil actif »,
+   lancez un titre à la main dans Spotify sur l'ordi. Cochez aussi la case du fondu enchaîné
+   une fois le réglage fait — l'appli ne peut pas le vérifier à votre place.
 4. **Mettre les demandes en pause** (apéro/dîner sous votre contrôle).
 5. Ajouter vous-mêmes 3-4 titres en liste d'attente pour qu'elle ne soit pas vide.
 
@@ -140,7 +149,6 @@ Si tout coche : **vous êtes prêts.** Sinon, voir Dépannage plus bas.
 - Un titre gênant ? ✕ sur la page admin. Un discours surprise ? Pause.
 
 **Après la fête**
-- Les playlists des invités sont sur votre Spotify (préfixe 💍)
 - Toutes les photos + petits mots : Media Library Cloudinary, tag `nos10ans-livredor`, téléchargement groupé
 
 ---
@@ -149,11 +157,14 @@ Si tout coche : **vous êtes prêts.** Sinon, voir Dépannage plus bas.
 
 | Symptôme | Solution |
 |---|---|
-| Page invités très lente au premier chargement | Normal après 15 min d'inactivité (serveur gratuit qui se réveille). Ouvrez la page admin 20 min avant les invités. |
-| "Aucun appareil actif" | Jouez un titre à la main dans Spotify sur l'ordi, puis réessayez. |
+| Page invités très lente au premier chargement | Normal après 15 min d'inactivité (serveur gratuit qui se réveille). L'appli affiche « On réveille la soirée… ». Ouvrez la page admin 20 min avant les invités. |
+| "Aucun appareil actif" | Le bandeau du pupitre le dit explicitement. Jouez un titre à la main dans Spotify sur l'ordi : il repasse au vert en quelques secondes. |
 | Les titres votés ne s'insèrent pas | Vérifiez : demandes ouvertes ? fondu enchaîné à 0 ? une musique joue bien ? |
-| Un invité ne voit rien | Vérifiez qu'il est en 4G/5G (pas un wifi captif d'hôtel) et que l'adresse est la bonne. |
-| Photos qui ne partent pas | Connexion 4G faible : réessayer, ou envoyer une photo à la fois. |
-| Page admin demande le code en boucle | Vérifiez la variable `ADMIN_CODE` dans Render et retapez-le exactement. |
+| Un invité voit « Connexion perdue » | Son réseau a lâché. Rien à faire : l'appli se reconnecte seule et le bandeau disparaît. |
+| Un invité ne voit rien du tout | Vérifiez qu'il est en 4G/5G (pas un wifi captif d'hôtel) et que l'adresse est la bonne. |
+| Photos qui ne partent pas | Les photos en échec **restent dans le bac**, marquées en rouge, avec un bouton « Réessayer ». Rien n'est perdu, il suffit de retoucher le bouton une fois le réseau revenu. |
+| Un invité a voté par erreur | Il retouche le même bouton : cela annule son vote. |
+| Photo supprimée par erreur sur le pupitre | Touchez **Annuler** dans les 6 secondes. Passé ce délai, c'est définitif. |
+| Page admin demande le code | Un encart de saisie s'affiche dans la page. Vérifiez la variable `ADMIN_CODE` dans Render et retapez-le exactement. |
 
 Bonne fête, Audrey & Ludo ! 🥂💍
