@@ -89,11 +89,17 @@
     display:grid;place-items:center;color:var(--nuit);
     font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px}
   @keyframes tourne{to{transform:rotate(360deg)}}
-  @media (prefers-reduced-motion:reduce){.vinyle{animation:none}}
+  @media (prefers-reduced-motion:reduce){
+    .vinyle,.accueil .vinyle-acc{animation:none}
+    .toast{transition:none}
+    .barre>div{transition:none}
+    .btn-deplier .chevron{transition:none}
+    button{transition:none}
+  }
   .now .titre{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;line-height:1.15}
   .now .artiste{color:var(--etain);font-size:14px;margin-top:4px}
   .barre{height:3px;background:#34373f;border-radius:2px;margin-top:16px;overflow:hidden}
-  .barre>div{height:100%;width:0%;background:var(--champagne);border-radius:2px;transition:width 1s linear}
+  .barre>div{height:100%;width:0%;background:var(--champagne);border-radius:2px;transition:width .9s linear}
 
   .section-titre{font-size:11px;letter-spacing:.28em;text-transform:uppercase;
     color:var(--etain-sombre);font-weight:500;margin:26px 2px 10px}
@@ -106,18 +112,28 @@
   .t{font-weight:400;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .a{color:var(--etain);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .vide{color:var(--etain-sombre);font-size:14px;text-align:center;padding:14px}
+  /* Atténuation des prochains titres Spotify par des couleurs explicites :
+     une opacité globale faisait passer le texte sous le rapport 4.5:1. */
+  .piste-suite .t{color:var(--etain)}
+  .piste-suite .a{color:var(--etain-sombre)}
+  .piste-suite img,.piste-suite .pochette{opacity:.75}
   .piste.suivante{border-color:rgba(230,196,126,.6);
     box-shadow:0 0 18px rgba(230,196,126,.16);background:linear-gradient(180deg,#2a2c37,#23252d)}
-  .badge-suivante{font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  .badge-suivante{font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--champagne);font-weight:500;margin-bottom:2px}
 
-  .col-votes{flex:none;display:flex;gap:6px}
+  /* Cibles tactiles : le visuel ne change pas, la zone de tap est étendue
+     au-delà du dessin. 40+6=46 px et 42+6=48 px, donc ≥ 44 px. */
+  .btn-plus,.btn-vote{position:relative}
+  .btn-plus::before,.btn-vote::before{content:"";position:absolute;inset:-3px}
+  .btn-plus,.btn-mini{display:grid;place-items:center}
+  .col-votes{flex:none;display:flex;gap:8px}
   .btn-vote{display:flex;flex-direction:column;align-items:center;justify-content:center;
     width:42px;height:48px;border-radius:12px;border:1px solid #383b45;background:var(--carte-2);
     color:var(--etain);cursor:pointer;font-family:inherit;
     transition:border-color .15s,color .15s,transform .1s}
   .btn-vote.vote-contre{border-color:var(--rose);color:var(--rose);background:rgba(181,118,130,.1)}
-  .votants{font-size:11.5px;color:var(--etain-sombre);margin-top:3px;line-height:1.5}
+  .votants{font-size:12px;color:var(--etain-sombre);margin-top:3px;line-height:1.5}
   .votants b{font-weight:500;color:var(--etain)}
   .votants .p{color:var(--champagne)}
   .votants .c{color:var(--rose)}
@@ -151,7 +167,9 @@
   .btn-deplier{display:block;width:100%;background:none;border:1px dashed rgba(230,196,126,.45);
     color:var(--champagne);font-family:inherit;font-size:14px;padding:12px;border-radius:999px;
     cursor:pointer;margin-top:10px}
-  .btn-deplier .chevron{display:inline-block;margin-left:4px}
+  .btn-deplier .chevron{display:inline-flex;vertical-align:middle;margin-left:4px;
+    transition:transform var(--transition)}
+  .btn-deplier[aria-expanded="true"] .chevron{transform:rotate(180deg)}
   .btn-retour{background:none;border:none;color:var(--champagne);font-family:inherit;
     font-size:14px;cursor:pointer;padding:8px 0;margin-bottom:4px}
   .form-pl,.form-photo{display:none;flex-direction:column;gap:10px;margin-top:12px}
@@ -171,8 +189,15 @@
   /* ---- Livre d'or : fil ---- */
   .zone-depot{margin-bottom:16px}
   .apercu-fichiers{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
-  .apercu-fichiers img{width:56px;height:56px;object-fit:cover;border-radius:8px;
-    border:1px solid var(--champagne)}
+  .apercu-fichiers .vignette{position:relative;width:56px;height:56px}
+  .apercu-fichiers .vignette img{width:100%;height:100%;object-fit:cover;
+    border-radius:8px;border:1px solid var(--champagne)}
+  .apercu-fichiers .voile{position:absolute;inset:0;border-radius:8px;
+    display:grid;place-items:center;font-size:11px;font-weight:500;
+    background:rgba(12,13,16,.62);color:var(--champagne)}
+  .apercu-fichiers .vignette.faite .voile{background:rgba(12,13,16,.3)}
+  .apercu-fichiers .vignette.echec .voile{background:rgba(181,118,130,.62);color:#fff}
+  .apercu-fichiers .vignette:not(.encours):not(.faite):not(.echec) .voile{display:none}
   .fil{display:flex;flex-direction:column;gap:16px}
   .carte-photo{background:var(--carte);border:1px solid #30333d;border-radius:var(--rayon);
     overflow:hidden}
@@ -181,7 +206,7 @@
     background:radial-gradient(circle,var(--champagne),var(--champagne-fonce));
     display:grid;place-items:center;color:var(--nuit);font-weight:500;font-size:14px}
   .carte-photo .qui{font-size:14px;font-weight:400}
-  .carte-photo .quand{color:var(--etain-sombre);font-size:11.5px}
+  .carte-photo .quand{color:var(--etain-sombre);font-size:12px}
   .carte-photo .media{width:100%;aspect-ratio:1;object-fit:cover;display:block;
     background:var(--carte-2);cursor:pointer}
   .carte-photo .legende{padding:10px 14px 0;font-family:'Cormorant Garamond',serif;
@@ -197,8 +222,11 @@
   .commentaire{font-size:13.5px;line-height:1.4}
   .commentaire b{font-weight:500;color:var(--champagne)}
   .zone-com{display:flex;gap:8px;padding:8px 14px 14px}
-  .zone-com input{flex:1;background:var(--carte-2);border:1px solid #383b45;border-radius:999px;
-    padding:10px 16px;color:var(--ivoire);font-family:inherit;font-size:14px;outline:none}
+  /* 16 px et non 14 : en dessous, iOS zoome automatiquement au focus
+     et casse la mise en page. */
+  .zone-com input{flex:1;min-width:0;background:var(--carte-2);border:1px solid #383b45;
+    border-radius:999px;padding:11px 16px;color:var(--ivoire);font-family:inherit;
+    font-size:16px;outline:none}
   .zone-com input::placeholder{color:var(--etain-sombre)}
   .zone-com input:focus-visible{border-color:var(--champagne)}
   .zone-com button{flex:none;background:none;border:none;color:var(--champagne);
@@ -207,9 +235,11 @@
   /* ---- Livre d'or : grille + visionneuse ---- */
   .galerie{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
   .photo{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;
-    background:var(--carte-2);border:1px solid #30333d}
+    background:var(--carte-2);border:1px solid #30333d;padding:0;font:inherit;display:block;
+    width:100%}
+  .photo:focus-visible{outline:2px solid var(--champagne);outline-offset:2px}
   .photo img{width:100%;height:100%;object-fit:cover;display:block}
-  .photo .coin{position:absolute;bottom:4px;right:6px;font-size:10px;color:#fff;
+  .photo .coin{position:absolute;bottom:4px;right:6px;font-size:11px;color:#fff;
     text-shadow:0 1px 3px rgba(0,0,0,.8)}
   .visionneuse{position:fixed;inset:0;background:rgba(12,13,16,.96);z-index:30;display:none;
     flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
@@ -219,8 +249,17 @@
     margin-top:18px;max-width:360px;line-height:1.3}
   .visionneuse .aut{color:var(--champagne);font-size:13px;margin-top:8px}
   .visionneuse .fermer{position:absolute;top:calc(14px + env(safe-area-inset-top));right:18px;background:var(--carte);
-    border:1px solid #383b45;color:var(--ivoire);width:40px;height:40px;border-radius:50%;
-    font-size:18px;cursor:pointer}
+    border:1px solid #383b45;color:var(--ivoire);width:44px;height:44px;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer}
+  .nav-photo{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;
+    border-radius:50%;background:var(--carte);border:1px solid #383b45;color:var(--ivoire);
+    display:grid;place-items:center;cursor:pointer;z-index:2}
+  .nav-photo.precedente{left:12px}
+  .nav-photo.suivante{right:12px}
+  .visionneuse .position{color:var(--etain-sombre);font-size:12px;margin-top:10px;
+    letter-spacing:.06em}
+  /* L'arrière-plan ne doit pas défiler derrière la visionneuse ouverte. */
+  body.fige{overflow:hidden}
 
   /* ---- Accueil ---- */
   .accueil{position:fixed;inset:0;background:var(--nuit);z-index:20;overflow-y:auto;
@@ -250,6 +289,12 @@
   .accueil .champ{max-width:360px;text-align:center;margin-bottom:12px}
   .accueil .btn-or{max-width:360px}
   .accueil .note{color:var(--etain-sombre);font-size:12px;margin-top:14px}
+  /* Sur iPhone SE, le prénom et le bouton passaient sous la ligne de
+     flottaison sans le moindre indice. Ils restent désormais à portée. */
+  .accueil{padding-bottom:0}
+  .accueil-actions{position:sticky;bottom:0;width:100%;max-width:360px;margin-top:auto;
+    padding:22px 0 calc(20px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,rgba(21,22,28,0),var(--nuit) 24%)}
   .lien-aide{background:none;border:none;color:var(--etain-sombre);font-family:inherit;
     font-size:12px;cursor:pointer;text-decoration:underline;margin-top:8px}
 
@@ -265,9 +310,16 @@
     border:1px solid #30333d;border-radius:18px;padding:14px}
   .tuto .visuel svg{width:100%;height:auto;display:block}
   .tuto .texte{color:var(--etain);font-size:14.5px;line-height:1.55;max-width:330px;min-height:66px}
-  .tuto .points{display:flex;gap:8px;margin:20px 0 16px}
-  .tuto .points span{width:8px;height:8px;border-radius:50%;background:#383b45;transition:background .2s}
-  .tuto .points span.actif{background:var(--champagne)}
+  .tuto .points{display:flex;gap:2px;margin:12px 0 8px}
+  .tuto .points button{width:44px;height:44px;padding:0;background:none;border:none;
+    display:grid;place-items:center;cursor:pointer}
+  .tuto .points button span{width:8px;height:8px;border-radius:50%;background:#383b45;
+    display:block;transition:background .2s}
+  .tuto .points button[aria-selected="true"] span{background:var(--champagne)}
+  .tuto .points button:focus-visible{outline:2px solid var(--champagne);outline-offset:-6px;
+    border-radius:50%}
+  .tuto-precedent{background:none;border:none;color:var(--champagne);font-family:inherit;
+    font-size:14px;cursor:pointer;padding:12px;min-height:44px;margin-top:4px}
   .tuto .btn-or{max-width:300px}
   .tuto .passer{background:none;border:none;color:var(--etain-sombre);font-family:inherit;
     font-size:13px;cursor:pointer;text-decoration:underline;margin-top:14px}
@@ -277,6 +329,25 @@
     font-weight:500;font-size:14px;padding:12px 22px;border-radius:999px;opacity:0;
     pointer-events:none;transition:opacity .25s,transform .25s;max-width:90vw;text-align:center;z-index:40}
   .toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast{display:flex;align-items:center;gap:12px;justify-content:center}
+  .toast-action{background:none;border:none;font-family:inherit;font-weight:600;
+    font-size:14px;color:var(--nuit);text-decoration:underline;cursor:pointer;
+    padding:6px 2px;min-height:44px}
+
+  /* ---- État du réseau et chargement ---- */
+  .bandeau-reseau{display:none;align-items:flex-start;gap:12px;margin:0 0 14px;
+    background:rgba(181,118,130,.12);border:1px solid rgba(181,118,130,.45);
+    border-radius:14px;padding:13px 15px;color:var(--etain);font-size:13px;line-height:1.45}
+  .bandeau-reseau.visible{display:flex}
+  .bandeau-reseau .ico{flex:none;display:flex;color:var(--rose)}
+  .bandeau-reseau b{color:var(--ivoire);font-weight:500}
+  .squelette{background:var(--carte);border:1px solid #30333d;border-radius:14px;
+    height:66px;position:relative;overflow:hidden}
+  .squelette::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(244,241,234,.05),transparent);
+    animation:balayage 1.4s linear infinite}
+  @keyframes balayage{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+  @media (prefers-reduced-motion:reduce){.squelette::after{animation:none}}
 
   footer{text-align:center;color:var(--etain-sombre);font-size:12px;margin-top:36px}
   footer em{font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--etain)}
@@ -311,9 +382,11 @@
       <button class="btn-mini" id="btn-tuto-install" style="margin-top:10px">Voir le pas-à-pas en images</button>
     </div>
   </div>
-  <input class="champ" id="accueil-prenom" placeholder="Votre prénom" maxlength="40" autocomplete="given-name">
-  <button class="btn-or" id="btn-entrer">Entrer dans la soirée 🥂</button>
-  <p class="note">Pas de compte, pas d'inscription — juste votre prénom.</p>
+  <div class="accueil-actions">
+    <input class="champ" id="accueil-prenom" placeholder="Votre prénom" maxlength="40" autocomplete="given-name">
+    <button class="btn-or" id="btn-entrer">Entrer dans la soirée 🥂</button>
+    <p class="note">Pas de compte, pas d'inscription — juste votre prénom.</p>
+  </div>
 </div>
 
 <div class="tuto" id="tuto">
@@ -322,6 +395,7 @@
   <p class="texte" id="tuto-texte"></p>
   <div class="points" id="tuto-points"></div>
   <button class="btn-or" id="tuto-suivant">Suivant</button>
+  <button class="tuto-precedent" id="tuto-precedent">Précédent</button>
   <button class="passer" id="tuto-passer">Passer</button>
 </div>
 
@@ -332,6 +406,11 @@
   <p class="compteur" id="compteur" style="display:none"></p>
   <div class="filet"></div>
 </header>
+
+<div class="bandeau-reseau" id="bandeau-reseau" role="status">
+  <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.7 13.7a6 6 0 0 0-7.4-7.4"/><path d="M5 12.5a10 10 0 0 1 3.2-2.3"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span>
+  <p id="texte-reseau"></p>
+</div>
 
 <!-- ===================== UNIVERS MUSIQUE · Ce soir ===================== -->
 <div class="page actif" id="page-soiree">
@@ -347,13 +426,14 @@
     <span class="ico" style="color:var(--champagne)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></span>
     <p><b>Les demandes sont en pause</b> le temps d'un moment spécial. Vous pouvez toujours voter ♥ — tout rouvre très vite !</p>
   </div>
-  <div class="liste" id="file"><p class="vide">Chargement…</p></div>
+  <div class="liste" id="file"></div>
+  <p class="vide" id="file-vide">Chargement…</p>
 
   <div id="zone-suite" style="display:none">
     <p class="section-titre">Puis, la playlist d'Audrey &amp; Ludo</p>
     <div class="liste" id="suite"></div>
     <button class="btn-deplier" id="btn-playlist-complete" aria-expanded="false">
-      Voir toute la playlist <span class="chevron">▾</span>
+      Voir toute la playlist <span class="chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span>
     </button>
     <div id="playlist-complete" style="display:none">
       <p class="section-titre" id="pc-titre"></p>
@@ -395,21 +475,26 @@
 </div>
 
 <nav>
-  <button class="tab actif" data-page="page-soiree"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Musique</button>
+  <button class="tab actif" aria-current="page" data-page="page-soiree"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Musique</button>
   <button class="tab" data-page="page-livredor"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Livre d'or</button>
 </nav>
 
-<div class="visionneuse" id="visionneuse">
-  <button class="fermer" id="fermer-visionneuse" aria-label="Fermer">✕</button>
+<div class="visionneuse" id="visionneuse" role="dialog" aria-modal="true"
+     aria-label="Photo du livre d'or">
+  <button class="fermer" id="fermer-visionneuse" aria-label="Fermer"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+  <button class="nav-photo precedente" id="photo-precedente" aria-label="Photo précédente"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
+  <button class="nav-photo suivante" id="photo-suivante" aria-label="Photo suivante"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
   <div id="visionneuse-media"></div>
   <p class="com" id="visionneuse-com"></p>
   <p class="aut" id="visionneuse-aut"></p>
+  <p class="position" id="visionneuse-position"></p>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
 
+<script src="/commun.js"></script>
 <script>
-const $ = id => document.getElementById(id);
+/* $, esc, toast, api, creerSondage et Reseau viennent de /commun.js */
 
 /* ---- Identifiant d'invité (un vote / un like par personne) ---- */
 let inviteId = localStorage.getItem('inviteId');
@@ -417,24 +502,43 @@ if(!inviteId){
   inviteId = 'inv-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
   localStorage.setItem('inviteId', inviteId);
 }
-async function api(url, options={}){
-  const r = await fetch(url, {
-    ...options,
-    headers:{ 'X-Invite-Id': inviteId,
-      ...(options.body ? {'Content-Type':'application/json'} : {}),
-      ...(options.headers||{}) },
-  });
-  return { ok:r.ok, data: await r.json().catch(()=>({})) };
+configurerApi(() => ({ 'X-Invite-Id': inviteId }));
+
+/* ================= État du réseau, visible =================
+   Là où il n'y avait que des catch(e){} silencieux : l'invité voit
+   maintenant pourquoi rien ne bouge, et ça se répare tout seul. */
+const TEXTE_REVEIL = '<b>On réveille la soirée…</b> Le serveur se met en veille '
+  + 'quand personne ne l\'utilise : quelques secondes et c\'est parti.';
+const TEXTE_PANNE = '<b>Connexion perdue.</b> Vos votes repartiront tout seuls '
+  + 'dès que le réseau revient.';
+
+let premierChargementFait = false;
+
+function montrerBandeauReseau(html){
+  $('texte-reseau').innerHTML = html;
+  $('bandeau-reseau').classList.add('visible');
+}
+function masquerBandeauReseau(){
+  $('bandeau-reseau').classList.remove('visible');
 }
 
-let toastTimer;
-function toast(msg){
-  $('toast').textContent = msg;
-  $('toast').classList.add('visible');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>$('toast').classList.remove('visible'), 2600);
+// Premier chargement lent = réveil de l'hébergeur, pas une panne : on le dit.
+const minuteurReveil = setTimeout(() => {
+  if(!premierChargementFait) montrerBandeauReseau(TEXTE_REVEIL);
+}, 3000);
+
+Reseau.surChangement(enPanne => {
+  if(enPanne) montrerBandeauReseau(premierChargementFait ? TEXTE_PANNE : TEXTE_REVEIL);
+  else masquerBandeauReseau();
+});
+
+function signalerPremierChargement(){
+  if(premierChargementFait) return;
+  premierChargementFait = true;
+  clearTimeout(minuteurReveil);
+  masquerBandeauReseau();
 }
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
 function img(u){return u ? '<img src="'+u+'" alt="">' : '<div class="pochette"></div>'}
 function monPrenom(){ return localStorage.getItem('prenom') || 'Un invité'; }
 function svgCoeur(plein,taille){taille=taille||16;
@@ -456,7 +560,7 @@ $('btn-entrer').onclick = ()=>{
   const prenom = $('accueil-prenom').value.trim();
   if(!prenom){ toast('Dites-nous votre prénom !'); $('accueil-prenom').focus(); return; }
   localStorage.setItem('prenom', prenom);
-  api('/api/bonjour',{method:'POST',body:JSON.stringify({prenom})});
+  api('/api/bonjour',{method:'POST',body:JSON.stringify({prenom})}).catch(()=>{});
   $('accueil').classList.add('ferme');
   if(!localStorage.getItem('tutoVu')){
     ouvrirTuto(TUTO_FONCTIONS, ()=>{ localStorage.setItem('tutoVu','1'); toast('Bienvenue '+prenom+' ! 🥂'); });
@@ -491,7 +595,7 @@ $('lien-aide').onclick = ()=>{
 
 /* Signaler sa présence à chaque ouverture (registre des mariés) */
 if(localStorage.getItem('prenom')){
-  api('/api/bonjour',{method:'POST',body:JSON.stringify({prenom: localStorage.getItem('prenom')})});
+  api('/api/bonjour',{method:'POST',body:JSON.stringify({prenom: localStorage.getItem('prenom')})}).catch(()=>{});
 }
 
 /* ================= Tutoriels en images ================= */
@@ -609,6 +713,8 @@ function ouvrirTuto(diapos, fin, boutonFinal){
   $('tuto').dataset.final = boutonFinal || "C'est parti 🥂";
   montrerDiapo();
   $('tuto').classList.add('ouvert');
+  // Couche d'historique : le retour du téléphone ferme le tutoriel.
+  Couches.ouvrir('tuto', fermerTutoReellement);
 }
 function montrerDiapo(){
   const d = tutoDiapos[tutoIndex];
@@ -616,19 +722,30 @@ function montrerDiapo(){
   $('tuto-visuel').innerHTML = d.visuel;
   $('tuto-texte').textContent = d.texte;
   $('tuto-points').innerHTML = tutoDiapos.map((_,i)=>
-    '<span'+(i===tutoIndex?' class="actif"':'')+'></span>').join('');
+    '<button type="button" role="tab" aria-selected="'+(i===tutoIndex)+'" '+
+    'aria-label="Étape '+(i+1)+' sur '+tutoDiapos.length+'"><span></span></button>').join('');
   $('tuto-suivant').textContent = tutoIndex === tutoDiapos.length-1
     ? $('tuto').dataset.final : 'Suivant';
+  $('tuto-precedent').style.visibility = tutoIndex === 0 ? 'hidden' : 'visible';
 }
-function fermerTuto(){
+function fermerTutoReellement(){
   $('tuto').classList.remove('ouvert');
-  if(tutoFin) tutoFin();
+  const fin = tutoFin; tutoFin = null;
+  if(fin) fin();
 }
 $('tuto-suivant').onclick = ()=>{
   if(tutoIndex < tutoDiapos.length-1){ tutoIndex++; montrerDiapo(); }
-  else fermerTuto();
+  else Couches.demanderFermeture('tuto');
 };
-$('tuto-passer').onclick = fermerTuto;
+$('tuto-precedent').onclick = ()=>{
+  if(tutoIndex > 0){ tutoIndex--; montrerDiapo(); }
+};
+$('tuto-points').addEventListener('click', e=>{
+  const bouton = e.target.closest('button'); if(!bouton) return;
+  const i = [...$('tuto-points').children].indexOf(bouton);
+  if(i >= 0){ tutoIndex = i; montrerDiapo(); }
+});
+$('tuto-passer').onclick = ()=> Couches.demanderFermeture('tuto');
 
 $('btn-tuto-install').onclick = ()=> ouvrirTuto(slidesInstall(), null, "J'ai compris");
 
@@ -642,74 +759,237 @@ const SOUS_TITRES = {
   'page-livredor':'Partagez vos photos et vos petits mots',
 };
 function montrer(pageId){
+  const dejaLa = $(pageId).classList.contains('actif');
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('actif'));
   $(pageId).classList.add('actif');
-  document.querySelectorAll('nav .tab').forEach(x=>
-    x.classList.toggle('actif', x.dataset.page===UNIVERS[pageId]));
+  document.querySelectorAll('nav .tab').forEach(x=>{
+    const actif = x.dataset.page===UNIVERS[pageId];
+    x.classList.toggle('actif', actif);
+    if(actif) x.setAttribute('aria-current','page'); else x.removeAttribute('aria-current');
+  });
   document.querySelectorAll('.pill[data-page]').forEach(x=>
     x.classList.toggle('actif', x.dataset.page===pageId));
   $('sous-titre').textContent = SOUS_TITRES[pageId];
-  if(pageId==='page-livredor') chargerGalerie();
-  window.scrollTo({top:0});
+  // Rafraîchissement d'opportunité : le sondage 'livredor' réessaiera de
+  // toute façon, donc un échec réseau ici ne doit pas remonter.
+  if(pageId==='page-livredor') chargerGalerie().catch(()=>{});
+  if(!dejaLa) window.scrollTo({top:0});
+}
+
+/* ================= Couches et historique système =========================
+   Chaque couche ouverte (visionneuse, tutoriel) pousse une entrée
+   d'historique : le bouton retour Android et le swipe-back iOS ferment donc
+   la couche du dessus au lieu de QUITTER l'application.
+   Les onglets, eux, passent par le hash — ils deviennent au passage des
+   liens profonds (#musique, #livredor) et s'intègrent seuls à l'historique. */
+const Couches = {
+  pile: [],
+  ouvrir(nom, fermer){
+    this.pile.push({nom, fermer});
+    history.pushState({couche:nom}, '');
+  },
+  demanderFermeture(nom){
+    // On passe TOUJOURS par l'historique : c'est popstate qui ferme.
+    // Fermer directement désynchroniserait la pile et l'historique.
+    if(this.pile.length && this.pile[this.pile.length-1].nom === nom) history.back();
+  },
+};
+
+window.addEventListener('popstate', e => {
+  // e.state.couche = la couche au sommet à CETTE entrée d'historique.
+  // Tout ce qui est empilé au-dessus se ferme. Une entrée sans couche
+  // (changement d'onglet) ferme donc toutes les couches.
+  const nom = e.state && e.state.couche;
+  while(Couches.pile.length && Couches.pile[Couches.pile.length-1].nom !== nom){
+    Couches.pile.pop().fermer();
+  }
+  synchroniserOnglet();
+});
+
+function synchroniserOnglet(){
+  montrer(location.hash === '#livredor' ? 'page-livredor' : 'page-soiree');
 }
 document.addEventListener('click', e=>{
   const b = e.target.closest('nav .tab, .pill[data-page]');
-  if(b) montrer(b.dataset.page);
+  if(!b) return;
+  const cible = b.dataset.page === 'page-livredor' ? '#livredor' : '#musique';
+  if(location.hash === cible) montrer(b.dataset.page);   // déjà là : rien à empiler
+  else location.hash = cible;
 });
+window.addEventListener('hashchange', synchroniserOnglet);
+synchroniserOnglet();
 
 /* ================= Musique · En cours de lecture ================= */
+/* La barre avançait par bonds de 5 s, au rythme du sondage. On interpole
+   localement entre deux réponses, en repartant de zéro au changement de
+   titre. La pochette n'est réinjectée que si elle a changé : la réécrire à
+   chaque tour la faisait clignoter en 4G. */
+let lecture = {progres:0, duree:0, recuA:0, joue:false};
+
 async function majNowPlaying(){
-  try{
-    const {data:d} = await api('/api/now-playing');
-    if(d.title){
-      $('np-titre').textContent = d.title;
-      $('np-artiste').textContent = d.artists;
-      $('now').classList.toggle('joue', d.playing);
-      if(d.image) $('vinyle').innerHTML = '<img src="'+d.image+'" alt="">';
-      if(d.duration_ms) $('np-barre').style.width = Math.min(100, d.progress_ms/d.duration_ms*100)+'%';
-    }
-  }catch(e){}
+  const {data:d} = await api('/api/now-playing');
+  if(!d.title){ lecture.joue = false; return; }
+  const image = d.image || '';
+  if($('vinyle').dataset.src !== image){
+    $('vinyle').innerHTML = image
+      ? '<img src="'+image+'" alt="">'
+      : '<div class="etiquette">A&amp;L</div>';
+    $('vinyle').dataset.src = image;
+  }
+  $('np-titre').textContent = d.title;
+  $('np-artiste').textContent = d.artists;
+  $('now').classList.toggle('joue', d.playing);
+  lecture = {progres: d.progress_ms || 0, duree: d.duration_ms || 0,
+             recuA: Date.now(), joue: !!d.playing};
+  peindreProgression();
 }
 
-/* ================= Musique · Liste d'attente + votes ================= */
-function afficherFile(queue){
-  $('file').innerHTML = queue.length
-    ? queue.map((x,i)=>
-        '<div class="piste'+(i===0?' suivante':'')+'">' + img(x.image) +
-          '<div class="infos">' +
-            (i===0 ? '<div class="badge-suivante">Prochaine chanson</div>' : '') +
-            '<div class="t">'+esc(x.title)+'</div><div class="a">'+esc(x.artists)+'</div>' +
-            '<div class="votants">par <b>'+esc(x.proposePar)+'</b>' +
-              (x.pour ? ' · <span class="p">'+svgCoeur(true,10)+' '+esc(x.pourNoms)+'</span>' : '') +
-              (x.contre ? ' · <span class="c">'+svgBrise(10)+' '+esc(x.contreNoms)+'</span>' : '') +
-            '</div></div>' +
-          '<div class="col-votes">' +
-            '<button class="btn-vote'+(x.monVote==='pour'?' vote':'')+'" data-uri="'+x.uri+'" data-sens="pour" aria-label="Faire monter '+esc(x.title)+'">' +
-              '<span class="coeur">'+svgCoeur(x.monVote==='pour')+'</span><span class="nb">'+x.pour+'</span></button>' +
-            '<button class="btn-vote'+(x.monVote==='contre'?' vote-contre':'')+'" data-uri="'+x.uri+'" data-sens="contre" aria-label="Faire descendre '+esc(x.title)+'">' +
-              '<span class="coeur">'+svgBrise()+'</span><span class="nb">'+x.contre+'</span></button>' +
-          '</div>' +
-        '</div>').join('')
-    : '<p class="vide">La liste est vide — à vous de jouer !</p>';
+function peindreProgression(){
+  if(!lecture.duree) return;
+  const ecoule = lecture.progres + (lecture.joue ? Date.now() - lecture.recuA : 0);
+  const pourcent = Math.min(100, Math.max(0, ecoule / lecture.duree * 100));
+  $('np-barre').style.width = pourcent.toFixed(1) + '%';
 }
+setInterval(peindreProgression, 1000);
+
+/* ================= Musique · Liste d'attente + votes ================= */
+function votantsHtml(x){
+  return 'par <b>'+esc(x.proposePar)+'</b>' +
+    (x.pour ? ' · <span class="p">'+svgCoeur(true,10)+' '+esc(x.pourNoms)+'</span>' : '') +
+    (x.contre ? ' · <span class="c">'+svgBrise(10)+' '+esc(x.contreNoms)+'</span>' : '');
+}
+function carteHtml(x, premier){
+  return img(x.image) +
+    '<div class="infos">' +
+      (premier ? '<div class="badge-suivante">Prochaine chanson</div>' : '') +
+      '<div class="t">'+esc(x.title)+'</div><div class="a">'+esc(x.artists)+'</div>' +
+      '<div class="votants">'+votantsHtml(x)+'</div></div>' +
+    '<div class="col-votes">' +
+      '<button class="btn-vote" data-sens="pour" aria-label="Faire monter '+esc(x.title)+'">' +
+        '<span class="coeur">'+svgCoeur(x.monVote==='pour')+'</span>' +
+        '<span class="nb">'+x.pour+'</span></button>' +
+      '<button class="btn-vote" data-sens="contre" aria-label="Faire descendre '+esc(x.title)+'">' +
+        '<span class="coeur">'+svgBrise()+'</span>' +
+        '<span class="nb">'+x.contre+'</span></button>' +
+    '</div>';
+}
+function construireCarte(x){
+  const el = document.createElement('div');
+  el.className = 'piste';
+  el.innerHTML = carteHtml(x, false);
+  el.dataset.premier = '0';
+  majCarte(el, x);
+  return el;
+}
+function majCarte(el, x){
+  const doitEtrePremier = x._premier === true;
+  // On ne réécrit le HTML interne que si la structure change (badge « prochaine »).
+  if((el.dataset.premier === '1') !== doitEtrePremier){
+    el.innerHTML = carteHtml(x, doitEtrePremier);
+    el.dataset.premier = doitEtrePremier ? '1' : '0';
+  }
+  el.classList.toggle('suivante', doitEtrePremier);
+  const [btnPour, btnContre] = el.querySelectorAll('.btn-vote');
+  btnPour.dataset.uri = x.uri;   btnContre.dataset.uri = x.uri;
+  btnPour.querySelector('.nb').textContent = x.pour;
+  btnContre.querySelector('.nb').textContent = x.contre;
+  btnPour.classList.toggle('vote', x.monVote === 'pour');
+  btnContre.classList.toggle('vote-contre', x.monVote === 'contre');
+  btnPour.setAttribute('aria-pressed', String(x.monVote === 'pour'));
+  btnContre.setAttribute('aria-pressed', String(x.monVote === 'contre'));
+  btnPour.querySelector('.coeur').innerHTML = svgCoeur(x.monVote === 'pour');
+  el.querySelector('.votants').innerHTML = votantsHtml(x);
+}
+
+/* ---- Verrou d'interaction ------------------------------------------------
+   Après un tap sur un bouton de vote, l'ORDRE de la liste est figé 4 s.
+   Les compteurs, eux, continuent d'être mis à jour en place : l'interface
+   reste vivante, mais la carte visée ne se dérobe pas sous le doigt. */
+const DUREE_GEL_MS = 4000;
+let derniereFile = [], ordreGele = null, gelJusqua = 0, minuteurDegel = null;
+let derniereSignature = null;
+
+function signatureFile(q){
+  return q.map(t => t.uri+'|'+t.pour+'|'+t.contre+'|'+t.monVote).join('~');
+}
+function gelerOrdre(){
+  ordreGele = derniereFile.map(t => t.uri);
+  gelJusqua = Date.now() + DUREE_GEL_MS;
+}
+
+function appliquerFile(queue){
+  derniereFile = queue;
+  $('file').querySelectorAll('.squelette').forEach(n => n.remove());
+  const gele = Date.now() < gelJusqua && ordreGele;
+  let aAfficher = queue;
+  if(gele){
+    const rang = new Map(ordreGele.map((u,i) => [u,i]));
+    aAfficher = queue.filter(t => rang.has(t.uri))
+                     .sort((a,b) => rang.get(a.uri) - rang.get(b.uri));
+    clearTimeout(minuteurDegel);
+    minuteurDegel = setTimeout(() => appliquerFile(derniereFile),
+                               gelJusqua - Date.now() + 50);
+  } else {
+    ordreGele = null;
+  }
+  aAfficher.forEach((t,i) => { t._premier = (i === 0); });
+  $('file-vide').style.display = aAfficher.length ? 'none' : 'block';
+  $('file-vide').textContent = 'La liste est vide — à vous de jouer !';
+  flip($('file'), () =>
+    rendreListe($('file'), aAfficher, t => t.uri, construireCarte, majCarte));
+}
+
 async function majFile(){
-  try{
-    const {data:d} = await api('/api/queue');
-    afficherFile(d.queue||[]);
-    $('bandeau-pause').style.display = d.ouvert === false ? 'flex' : 'none';
-    const suite = d.suite||[];
-    $('zone-suite').style.display = suite.length ? 'block' : 'none';
-    $('suite').innerHTML = suite.map(t=>
-      '<div class="piste" style="opacity:.65">'+img(t.image)+
-        '<div class="infos"><div class="t">'+esc(t.title)+'</div><div class="a">'+esc(t.artists)+'</div></div></div>').join('');
-  }catch(e){}
+  const {data:d} = await api('/api/queue');
+  signalerPremierChargement();
+  const queue = d.queue || [];
+  const sig = signatureFile(queue);
+  if(sig !== derniereSignature){
+    derniereSignature = sig;
+    appliquerFile(queue);
+  }
+  $('bandeau-pause').style.display = d.ouvert === false ? 'flex' : 'none';
+  const suite = d.suite||[];
+  $('zone-suite').style.display = suite.length ? 'block' : 'none';
+  $('suite').innerHTML = suite.map(t=>
+    '<div class="piste piste-suite">'+img(t.image)+
+      '<div class="infos"><div class="t">'+esc(t.title)+'</div><div class="a">'+esc(t.artists)+'</div></div></div>').join('');
 }
 $('file').addEventListener('click', async e=>{
   const b = e.target.closest('.btn-vote'); if(!b) return;
-  const {ok, data:d} = await api('/api/vote', {method:'POST',
-    body:JSON.stringify({uri:b.dataset.uri, sens:b.dataset.sens})});
-  if(ok) afficherFile(d.queue||[]);
-  else toast(d.error || 'Oups, réessayez.');
+  const uri = b.dataset.uri, sens = b.dataset.sens;
+  gelerOrdre();
+
+  /* 1. On applique le résultat attendu immédiatement : le tap répond au doigt
+        même en 4G poussive. On garde de quoi revenir en arrière. */
+  const avant = derniereFile.map(t => ({...t}));
+  const cible = derniereFile.find(t => t.uri === uri);
+  if(cible){
+    const annulation = cible.monVote === sens;   // re-taper annule (server.js:334)
+    if(cible.monVote === 'pour') cible.pour--;
+    if(cible.monVote === 'contre') cible.contre--;
+    cible.monVote = annulation ? null : sens;
+    if(cible.monVote === 'pour') cible.pour++;
+    if(cible.monVote === 'contre') cible.contre++;
+    appliquerFile(derniereFile);
+    if(!annulation && !localStorage.getItem('vuAnnulationVote')){
+      localStorage.setItem('vuAnnulationVote','1');
+      toast('Re-touchez le même bouton pour annuler votre vote.');
+    }
+  }
+
+  /* 2. Puis la réponse du serveur fait autorité. */
+  try{
+    const {ok, data:d} = await api('/api/vote', {method:'POST',
+      body:JSON.stringify({uri, sens})});
+    if(ok){ derniereSignature = signatureFile(d.queue||[]); appliquerFile(d.queue||[]); }
+    else { appliquerFile(avant); toast(d.error || 'Oups, réessayez.'); }
+  }catch(err){
+    appliquerFile(avant);
+    toast('Vote non enregistré — réseau instable.', {
+      action:'Réessayer', surAction: () => b.click(),
+    });
+  }
 });
 
 /* ---- Playlist complète : dépliant + remontée de titres ---- */
@@ -717,7 +997,6 @@ let pcOuvert = false;
 $('btn-playlist-complete').onclick = async ()=>{
   pcOuvert = !pcOuvert;
   $('btn-playlist-complete').setAttribute('aria-expanded', String(pcOuvert));
-  $('btn-playlist-complete').querySelector('.chevron').textContent = pcOuvert ? '▴' : '▾';
   $('playlist-complete').style.display = pcOuvert ? 'block' : 'none';
   if(!pcOuvert) return;
   $('pc-pistes').innerHTML = '<p class="vide">Chargement…</p>';
@@ -733,22 +1012,30 @@ $('btn-playlist-complete').onclick = async ()=>{
   $('pc-pistes').innerHTML = d.tracks.map(t=>
     '<div class="piste">'+img(t.image)+
       '<div class="infos"><div class="t">'+esc(t.title)+'</div><div class="a">'+esc(t.artists)+'</div></div>'+
-      '<button class="btn-mini" data-uri="'+t.uri+'" aria-label="Faire remonter '+esc(t.title)+'">＋</button></div>').join('');
+      '<button class="btn-mini" data-uri="'+t.uri+'" aria-label="Faire remonter '+esc(t.title)+'">'+SVG_PLUS+'</button></div>').join('');
 };
 
 $('pc-pistes').addEventListener('click', async e=>{
   const b = e.target.closest('.btn-mini');
   if(!b || b.disabled) return;
   b.disabled = true;
-  const {ok, data:d} = await api('/api/queue',{method:'POST',body:JSON.stringify({uri:b.dataset.uri})});
-  if(ok){
-    b.textContent = '✓';
-    afficherFile(d.queue||[]);
-    toast('Dans la liste — les ♥ décident maintenant !');
-    window.scrollTo({top:0, behavior:'smooth'});
-  }else{
+  try{
+    const {ok, data:d} = await api('/api/queue',{method:'POST',body:JSON.stringify({uri:b.dataset.uri})});
+    if(ok){
+      b.innerHTML = SVG_COCHE;
+      derniereSignature = signatureFile(d.queue||[]);
+      appliquerFile(d.queue||[]);
+      toast('Dans la liste — les ♥ décident maintenant !');
+      window.scrollTo({top:0, behavior:'smooth'});
+    }else{
+      b.disabled = false;
+      toast(d.error || 'Oups, réessayez.');
+    }
+  }catch(err){
     b.disabled = false;
-    toast(d.error || 'Oups, réessayez.');
+    toast('Ajout impossible — réseau instable.', {
+      action:'Réessayer', surAction: () => b.click(),
+    });
   }
 });
 
@@ -760,11 +1047,21 @@ function brancheRecherche(inputId, resultatsId, onAjout){
     const q = $(inputId).value.trim();
     if(!q){ $(resultatsId).innerHTML=''; return; }
     delai = setTimeout(async ()=>{
-      const {data:d} = await api('/api/search?q='+encodeURIComponent(q));
-      $(resultatsId).innerHTML = (d.tracks||[]).map(t=>
-        '<div class="resultat">'+img(t.image)+
-          '<div class="infos"><div class="t">'+esc(t.title)+'</div><div class="a">'+esc(t.artists)+'</div></div>'+
-          '<button class="btn-plus" data-uri="'+t.uri+'" aria-label="Ajouter '+esc(t.title)+'">+</button></div>').join('');
+      $(resultatsId).innerHTML = '<div class="squelette"></div>'.repeat(2);
+      try{
+        const {data:d} = await api('/api/search?q='+encodeURIComponent(q));
+        if($(inputId).value.trim() !== q) return;   // l'invité a continué à taper
+        const pistes = d.tracks || [];
+        $(resultatsId).innerHTML = pistes.length
+          ? pistes.map(t=>
+              '<div class="resultat">'+img(t.image)+
+                '<div class="infos"><div class="t">'+esc(t.title)+'</div><div class="a">'+esc(t.artists)+'</div></div>'+
+                '<button class="btn-plus" data-uri="'+t.uri+'" aria-label="Ajouter '+esc(t.title)+'">'+SVG_PLUS+'</button></div>').join('')
+          : '<p class="vide">Aucun résultat pour « '+esc(q)+' ».</p>';
+      }catch(err){
+        $(resultatsId).innerHTML =
+          '<p class="vide">Recherche impossible — réseau instable. Réessayez dans un instant.</p>';
+      }
     }, 350);
   });
   $(resultatsId).addEventListener('click', async e=>{
@@ -772,42 +1069,135 @@ function brancheRecherche(inputId, resultatsId, onAjout){
     if(!b || b.disabled) return;
     b.disabled = true;
     const ok = await onAjout(b.dataset.uri);
-    if(ok){ b.textContent='✓'; } else { b.disabled=false; }
+    if(ok){ b.innerHTML = SVG_COCHE; } else { b.disabled=false; }
   });
 }
 
 brancheRecherche('q','resultats', async uri=>{
-  const {ok, data:d} = await api('/api/queue',{method:'POST',body:JSON.stringify({uri})});
-  if(ok){ toast('🎶 Ajoutée — votez pour la faire remonter !'); afficherFile(d.queue||[]); return true; }
-  toast(d.error || 'Oups, réessayez.'); return false;
+  try{
+    const {ok, data:d} = await api('/api/queue',{method:'POST',body:JSON.stringify({uri})});
+    if(ok){
+      // Le serveur vote automatiquement pour le proposeur (server.js:321) :
+      // on l'explique, sinon le compteur à 1 reste une énigme.
+      toast('🎶 Ajoutée — elle compte déjà votre ♥ !');
+      derniereSignature = signatureFile(d.queue||[]);
+      appliquerFile(d.queue||[]);
+      window.scrollTo({top:0, behavior:'smooth'});
+      return true;
+    }
+    toast(d.error || 'Oups, réessayez.');
+    return false;
+  }catch(err){
+    toast('Ajout impossible — réseau instable.');
+    return false;
+  }
 });
 
 /* ================= Livre d'or : fil + grille ================= */
 let photosGalerie = [];
 let fichiersChoisis = [];
 
+const SVG_BULLE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" '+
+  'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '+
+  'aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.1'+
+  'A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/></svg>';
+
+/* Les photos sont repérées par leur IDENTIFIANT et non par leur position :
+   une position ne survit pas à une réconciliation. */
+function construirePhoto(p){
+  const el = document.createElement('article');
+  el.className = 'carte-photo';
+  el.innerHTML =
+    '<div class="entete"><div class="avatar">'+initiale(p.author)+'</div>'+
+      '<div><div class="qui">'+esc(p.author)+'</div><div class="quand"></div></div></div>'+
+    '<img class="media" src="'+p.thumb.replace('w_400,h_400,c_fill','w_800,h_800,c_fill')+
+      '" data-id="'+esc(p.id)+'" alt="Photo de '+esc(p.author)+'" loading="lazy">'+
+    (p.comment ? '<p class="legende">« '+esc(p.comment)+' »</p>' : '')+
+    '<div class="actions">'+
+      '<button class="btn-like" type="button" data-id="'+esc(p.id)+'">'+
+        '<span class="c"></span> <span class="n"></span></button>'+
+      '<span class="nb-com">'+SVG_BULLE+' <span class="nb-com-n"></span></span></div>'+
+    '<div class="commentaires"></div>'+
+    '<div class="zone-com">'+
+      '<input placeholder="Ajouter un petit mot…" maxlength="200" data-id="'+esc(p.id)+
+        '" aria-label="Petit mot sur la photo de '+esc(p.author)+'">'+
+      '<button type="button" data-id="'+esc(p.id)+'">Publier</button></div>';
+  majPhoto(el, p);
+  return el;
+}
+
+/* Ne touche JAMAIS au champ de saisie : c'est tout l'objet du lot. */
+function majPhoto(el, p){
+  el.querySelector('.quand').textContent = ilYa(p.date);
+  const like = el.querySelector('.btn-like');
+  like.classList.toggle('like', p.jaiLike);
+  like.setAttribute('aria-pressed', String(!!p.jaiLike));
+  like.querySelector('.c').innerHTML = svgCoeur(p.jaiLike, 18);
+  like.querySelector('.n').textContent = p.likes;
+  el.querySelector('.nb-com-n').textContent = p.comments.length;
+  const zone = el.querySelector('.commentaires');
+  const attendu = p.comments.map(c =>
+    '<p class="commentaire"><b>'+esc(c.author)+'</b> '+esc(c.text)+'</p>').join('');
+  if(zone.innerHTML !== attendu) zone.innerHTML = attendu;
+}
+
+/* Un vrai <button> : les anciennes vignettes portaient role="button" et
+   tabindex="0" sans aucun gestionnaire clavier — annoncées comme
+   actionnables, elles ne faisaient rien au clavier. */
+function construireVignette(p){
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = 'photo';
+  el.dataset.id = p.id;
+  el.setAttribute('aria-label', 'Agrandir la photo de ' + p.author);
+  el.innerHTML = '<img src="'+p.thumb+'" alt="" loading="lazy"><span class="coin"></span>';
+  majVignette(el, p);
+  return el;
+}
+function majVignette(el, p){
+  el.querySelector('.coin').innerHTML = svgCoeur(true,10) + ' ' + p.likes;
+}
+
+/* Déplacer un nœud dans le DOM retire le focus de ce qu'il contient. Tant
+   qu'aucune carte ne change de place, la mise à jour en place est sans
+   risque et les compteurs restent vivants. Si l'ordre change pendant qu'un
+   invité écrit, on attend qu'il ait fini : le sondage repassera. */
+function ordreDuFil(){
+  return [...$('fil').children].map(n => n.dataset.cle).join('~');
+}
 function afficherLivredor(){
-  $('fil').innerHTML = photosGalerie.map((p,i)=>
-    '<article class="carte-photo">'+
-      '<div class="entete"><div class="avatar">'+initiale(p.author)+'</div>'+
-        '<div><div class="qui">'+esc(p.author)+'</div><div class="quand">'+ilYa(p.date)+'</div></div></div>'+
-      '<img class="media" src="'+p.thumb.replace('w_400,h_400,c_fill','w_800,h_800,c_fill')+'" data-i="'+i+'" alt="Photo de '+esc(p.author)+'" loading="lazy">'+
-      (p.comment ? '<p class="legende">« '+esc(p.comment)+' »</p>' : '')+
-      '<div class="actions">'+
-        '<button class="btn-like'+(p.jaiLike?' like':'')+'" data-id="'+esc(p.id)+'">'+
-          '<span class="c">'+svgCoeur(p.jaiLike,18)+'</span> <span class="n">'+p.likes+'</span></button>'+
-        '<span class="nb-com">💬 '+p.comments.length+'</span></div>'+
-      '<div class="commentaires">'+
-        p.comments.map(c=>'<p class="commentaire"><b>'+esc(c.author)+'</b> '+esc(c.text)+'</p>').join('')+
-      '</div>'+
-      '<div class="zone-com">'+
-        '<input placeholder="Ajouter un petit mot…" maxlength="200" data-id="'+esc(p.id)+'">'+
-        '<button data-id="'+esc(p.id)+'">Publier</button></div>'+
-    '</article>').join('');
-  $('galerie').innerHTML = photosGalerie.map((p,i)=>
-    '<div class="photo" data-i="'+i+'" role="button" tabindex="0">'+
-      '<img src="'+p.thumb+'" alt="" loading="lazy">'+
-      '<span class="coin">'+svgCoeur(true,10)+' '+p.likes+'</span></div>').join('');
+  const actif = document.activeElement;
+  const enTrainDEcrire = actif && actif.closest && actif.closest('#fil .zone-com');
+  if(enTrainDEcrire && ordreDuFil() !== photosGalerie.map(p => String(p.id)).join('~')) return;
+  rendreListe($('fil'), photosGalerie, p => p.id, construirePhoto, majPhoto);
+  rendreListe($('galerie'), photosGalerie, p => p.id, construireVignette, majVignette);
+}
+
+/* Cloudinary met quelques secondes à indexer une photo tout juste envoyée.
+   Sans fusion, le rechargement effacerait l'aperçu local et l'invité
+   croirait son envoi perdu. On garde donc chaque aperçu jusqu'à ce que sa
+   vraie photo apparaisse côté serveur — ou 3 minutes au maximum, pour ne
+   jamais laisser un fantôme à l'écran. */
+const VIE_MAX_APERCU_MS = 180000;
+
+function fusionnerLocales(serveur, locales){
+  const restants = [];
+  const apparies = {};
+  for(const loc of locales){
+    const age = Date.now() - new Date(loc.date).getTime();
+    const seuil = new Date(loc.date).getTime() - 15000;
+    const candidates = serveur.filter(p =>
+      p.author === loc.author && new Date(p.date).getTime() >= seuil).length;
+    const deja = apparies[loc.author] || 0;
+    if(candidates > deja || age > VIE_MAX_APERCU_MS){
+      apparies[loc.author] = deja + 1;
+      URL.revokeObjectURL(loc.thumb);
+      if(loc.grand !== loc.thumb) URL.revokeObjectURL(loc.grand);
+    } else {
+      restants.push(loc);
+    }
+  }
+  return restants.concat(serveur);
 }
 
 async function chargerGalerie(){
@@ -818,7 +1208,7 @@ async function chargerGalerie(){
     $('btn-photos').style.display = 'none';
     return;
   }
-  photosGalerie = d.photos || [];
+  photosGalerie = fusionnerLocales(d.photos || [], photosGalerie.filter(p => p._local));
   $('galerie-message').style.display = photosGalerie.length ? 'none' : 'block';
   $('galerie-message').textContent = d.error || 'Aucune photo pour l\'instant — soyez le premier !';
   afficherLivredor();
@@ -854,18 +1244,26 @@ $('fil').addEventListener('click', async e=>{
     const input = pub.parentElement.querySelector('input');
     const text = input.value.trim();
     if(!text) return;
-    const {ok, data:d} = await api('/api/livredor/comment',{method:'POST',
-      body:JSON.stringify({id: pub.dataset.id, text, author: monPrenom()})});
-    if(ok){
-      const p = photosGalerie.find(x=>x.id===pub.dataset.id);
-      if(p) p.comments = d.comments;
-      afficherLivredor();
-      toast('💬 Petit mot publié !');
-    } else toast(d.error || 'Oups, réessayez.');
+    pub.disabled = true;
+    try{
+      const {ok, data:d} = await api('/api/livredor/comment',{method:'POST',
+        body:JSON.stringify({id: pub.dataset.id, text, author: monPrenom()})});
+      if(ok){
+        const p = photosGalerie.find(x=>x.id===pub.dataset.id);
+        // Mise à jour de la SEULE carte concernée : pas de reconstruction du
+        // fil, donc pas de saut de défilement ni de saisie perdue ailleurs.
+        if(p){ p.comments = d.comments; majPhoto(pub.closest('.carte-photo'), p); }
+        input.value = '';
+        toast('Petit mot publié !');
+      } else toast(d.error || 'Oups, réessayez.');
+    }catch(err){
+      toast('Petit mot non publié — réseau instable.');
+    }
+    pub.disabled = false;
     return;
   }
   const media = e.target.closest('.media');
-  if(media) ouvrirVisionneuse(Number(media.dataset.i));
+  if(media) ouvrirVisionneuse(media.dataset.id, media);
 });
 $('fil').addEventListener('keydown', e=>{
   if(e.key==='Enter' && e.target.matches('.zone-com input')){
@@ -874,31 +1272,163 @@ $('fil').addEventListener('keydown', e=>{
 });
 
 /* Visionneuse (depuis la grille ou le fil) */
-function ouvrirVisionneuse(i){
-  const p = photosGalerie[i]; if(!p) return;
-  $('visionneuse-media').innerHTML = '<img src="'+p.grand+'" alt="">';
+let indexVisionneuse = 0, declencheurVisionneuse = null;
+
+function ouvrirVisionneuse(id, declencheur){
+  const i = photosGalerie.findIndex(x => String(x.id) === String(id));
+  if(i < 0) return;
+  indexVisionneuse = i;
+  declencheurVisionneuse = declencheur || null;
+  peindreVisionneuse();
+  $('visionneuse').classList.add('ouverte');
+  document.body.classList.add('fige');
+  $('fermer-visionneuse').focus();
+  Couches.ouvrir('visionneuse', fermerVisionneuseReellement);
+}
+
+function peindreVisionneuse(){
+  const p = photosGalerie[indexVisionneuse];
+  if(!p){ Couches.demanderFermeture('visionneuse'); return; }
+  $('visionneuse-media').innerHTML = '<img src="'+p.grand+'" alt="Photo de '+esc(p.author)+'">';
   $('visionneuse-com').textContent = p.comment ? '« '+p.comment+' »' : '';
   $('visionneuse-aut').innerHTML = '— '+esc(p.author)+' · '+svgCoeur(true,12)+' '+p.likes;
-  $('visionneuse').classList.add('ouverte');
+  $('visionneuse-position').textContent = (indexVisionneuse+1)+' / '+photosGalerie.length;
+  const seule = photosGalerie.length < 2;
+  $('photo-precedente').style.display = seule ? 'none' : 'grid';
+  $('photo-suivante').style.display   = seule ? 'none' : 'grid';
 }
+
+function allerPhoto(pas){
+  const n = photosGalerie.length; if(!n) return;
+  indexVisionneuse = (indexVisionneuse + pas + n) % n;
+  peindreVisionneuse();
+}
+
+function fermerVisionneuseReellement(){
+  $('visionneuse').classList.remove('ouverte');
+  document.body.classList.remove('fige');
+  if(declencheurVisionneuse && declencheurVisionneuse.isConnected){
+    declencheurVisionneuse.focus();      // le focus retourne d'où il venait
+  }
+  declencheurVisionneuse = null;
+}
+
 $('galerie').addEventListener('click', e=>{
   const el = e.target.closest('.photo');
-  if(el) ouvrirVisionneuse(Number(el.dataset.i));
+  if(el) ouvrirVisionneuse(el.dataset.id, el);
 });
-$('fermer-visionneuse').onclick = ()=> $('visionneuse').classList.remove('ouverte');
+$('fermer-visionneuse').onclick = ()=> Couches.demanderFermeture('visionneuse');
+$('photo-precedente').onclick = ()=> allerPhoto(-1);
+$('photo-suivante').onclick   = ()=> allerPhoto(1);
 $('visionneuse').addEventListener('click', e=>{
-  if(e.target===$('visionneuse')) $('visionneuse').classList.remove('ouverte');
+  if(e.target===$('visionneuse')) Couches.demanderFermeture('visionneuse');
+});
+
+document.addEventListener('keydown', e=>{
+  if(!$('visionneuse').classList.contains('ouverte')) return;
+  if(e.key === 'Escape'){ Couches.demanderFermeture('visionneuse'); return; }
+  if(e.key === 'ArrowLeft'){ allerPhoto(-1); return; }
+  if(e.key === 'ArrowRight'){ allerPhoto(1); return; }
+  if(e.key === 'Tab'){
+    // Piège de focus : on ne sort pas de la visionneuse au clavier.
+    const cibles = [...$('visionneuse').querySelectorAll('button')]
+      .filter(b => b.offsetParent !== null);
+    if(!cibles.length) return;
+    const i = cibles.indexOf(document.activeElement);
+    const suivant = e.shiftKey
+      ? cibles[(i - 1 + cibles.length) % cibles.length]
+      : cibles[(i + 1) % cibles.length];
+    suivant.focus();
+    e.preventDefault();
+  }
+});
+
+/* Balayage tactile. Les boutons précédent/suivant restent la voie
+   principale : WCAG 2.2 exige qu'une action au glissement ait toujours
+   un équivalent au pointeur simple. */
+let departXVisionneuse = null;
+$('visionneuse').addEventListener('touchstart', e=>{
+  departXVisionneuse = e.touches[0].clientX;
+}, {passive:true});
+$('visionneuse').addEventListener('touchend', e=>{
+  if(departXVisionneuse === null) return;
+  const ecart = e.changedTouches[0].clientX - departXVisionneuse;
+  if(Math.abs(ecart) > 60) allerPhoto(ecart > 0 ? -1 : 1);
+  departXVisionneuse = null;
 });
 
 /* Dépôt de photos (envoi direct vers Cloudinary) */
 $('btn-photos').onclick = ()=> $('input-photos').click();
 
+/* ---- Réduction avant envoi ------------------------------------------------
+   Une photo d'iPhone pèse ~4 Mo ; réduite, ~350 Ko. C'est la différence entre
+   un envoi qui aboutit en 4G dans une salle bondée et un qui échoue.
+   Tout échec de la réduction renvoie le fichier d'origine : on n'empêche
+   jamais un envoi, on l'allège quand on peut. */
+async function reduirePhoto(fichier, cote, qualite){
+  cote = cote || 1600; qualite = qualite || 0.82;
+  if(!/^image\//.test(fichier.type)) return fichier;
+  let bitmap;
+  try{
+    bitmap = await createImageBitmap(fichier, {imageOrientation:'from-image'});
+  }catch(e){ return fichier; }          // Safari ancien : on envoie l'original
+  const facteur = Math.min(1, cote / Math.max(bitmap.width, bitmap.height));
+  const l = Math.round(bitmap.width * facteur);
+  const h = Math.round(bitmap.height * facteur);
+  const toile = document.createElement('canvas');
+  toile.width = l; toile.height = h;
+  toile.getContext('2d').drawImage(bitmap, 0, 0, l, h);
+  bitmap.close();
+  const blob = await new Promise(r => toile.toBlob(r, 'image/jpeg', qualite));
+  if(!blob || blob.size >= fichier.size) return fichier;   // jamais plus gros
+  return new File([blob], fichier.name.replace(/\.[^.]+$/,'') + '.jpg',
+                  {type:'image/jpeg'});
+}
+
+/* XHR et non fetch : lui seul rapporte l'avancement de l'envoi. */
+function envoyerUnePhoto(sig, fichier, surProgres){
+  return new Promise((resoudre, rejeter) => {
+    const fd = new FormData();
+    fd.append('file', fichier);
+    fd.append('api_key', sig.api_key);
+    fd.append('timestamp', sig.timestamp);
+    fd.append('signature', sig.signature);
+    fd.append('context', sig.context);
+    fd.append('tags', sig.tags);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://api.cloudinary.com/v1_1/'+sig.cloud_name+'/image/upload');
+    xhr.timeout = 120000;
+    xhr.upload.onprogress = e => { if(e.lengthComputable) surProgres(e.loaded / e.total); };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300)
+      ? resoudre() : rejeter(new Error('HTTP ' + xhr.status));
+    xhr.onerror = () => rejeter(new Error('réseau'));
+    xhr.ontimeout = () => rejeter(new Error('délai dépassé'));
+    xhr.send(fd);
+  });
+}
+
+/* Deux envois simultanés : plus rapide que le séquentiel, sans saturer
+   le lien montant d'un téléphone en 4G. */
+async function enParallele(taches, largeur){
+  const file = taches.map((t,i) => [i,t]);
+  const ouvriers = Array.from({length: Math.min(largeur || 2, file.length)},
+    async () => { while(file.length){ const [i,t] = file.shift(); await t(i); } });
+  await Promise.all(ouvriers);
+}
+
+function dessinerApercus(){
+  $('apercu-fichiers').innerHTML = fichiersChoisis.map(f =>
+    '<div class="vignette"><img src="'+URL.createObjectURL(f)+'" alt="">'+
+    '<span class="voile"></span></div>').join('');
+  $('nb-photos').textContent = fichiersChoisis.length > 1
+    ? '('+fichiersChoisis.length+' photos)' : '';
+}
+
 $('input-photos').addEventListener('change', ()=>{
-  fichiersChoisis = [...$('input-photos').files].slice(0,20);
+  fichiersChoisis = [...$('input-photos').files]
+    .filter(f => /^image\//.test(f.type)).slice(0,20);
   if(!fichiersChoisis.length) return;
-  $('apercu-fichiers').innerHTML = fichiersChoisis.map(f=>
-    '<img src="'+URL.createObjectURL(f)+'" alt="">').join('');
-  $('nb-photos').textContent = fichiersChoisis.length>1 ? '('+fichiersChoisis.length+' photos)' : '';
+  dessinerApercus();
   $('form-photo').classList.add('ouvert');
 });
 
@@ -908,38 +1438,66 @@ $('btn-envoyer-photos').onclick = async ()=>{
   btn.disabled = true;
   const comment = $('photo-comment').value.trim();
   const author = monPrenom();
-  let envoyees = 0;
+  const vignettes = [...$('apercu-fichiers').children];
+  const echecs = [];
+  let reussies = 0;
 
-  for(const fichier of fichiersChoisis){
-    btn.firstChild.textContent = 'Envoi '+(envoyees+1)+'/'+fichiersChoisis.length+'… ';
+  await enParallele(fichiersChoisis.map(fichier => async (i) => {
+    const vignette = vignettes[i];
+    const etat = (classe, texte) => {
+      if(!vignette) return;
+      vignette.className = 'vignette ' + classe;
+      vignette.querySelector('.voile').textContent = texte;
+    };
+    etat('encours', '0 %');
     try{
+      const leger = await reduirePhoto(fichier);
       const {ok, data:sig} = await api('/api/livredor/sign',{method:'POST',
         body:JSON.stringify({author, comment})});
-      if(!ok) throw new Error(sig.error);
-      const fd = new FormData();
-      fd.append('file', fichier);
-      fd.append('api_key', sig.api_key);
-      fd.append('timestamp', sig.timestamp);
-      fd.append('signature', sig.signature);
-      fd.append('context', sig.context);
-      fd.append('tags', sig.tags);
-      const r = await fetch('https://api.cloudinary.com/v1_1/'+sig.cloud_name+'/image/upload',
-        {method:'POST', body:fd});
-      if(r.ok) envoyees++;
-    }catch(e){ /* on continue avec les suivantes */ }
-  }
+      if(!ok) throw new Error(sig.error || 'signature refusée');
+      await envoyerUnePhoto(sig, leger, p => etat('encours', Math.round(p*100)+' %'));
+      etat('faite', '✓');
+      reussies++;
+      /* Insertion optimiste : la photo est dans le fil AVANT que Cloudinary
+         ne l'ait indexée. L'entrée _local cède la place à la vraie au
+         chargement suivant — d'où la disparition du setTimeout d'espoir. */
+      const apercu = URL.createObjectURL(fichier);
+      photosGalerie.unshift({
+        id: 'local-' + i + '-' + reussies,
+        author, comment, date: new Date().toISOString(),
+        thumb: apercu, grand: apercu,
+        likes: 0, jaiLike: false, comments: [], _local: true,
+      });
+      afficherLivredor();
+    }catch(e){
+      etat('echec', '↻');
+      echecs.push(fichier);
+    }
+  }), 2);
 
   btn.disabled = false;
-  btn.firstChild.textContent = 'Envoyer ';
-  if(envoyees){
-    toast('📸 '+(envoyees>1 ? envoyees+' photos ajoutées' : 'Photo ajoutée')+' au livre d\'or !');
+  if(!echecs.length){
+    toast(reussies > 1
+      ? reussies+' photos ajoutées au livre d\'or !'
+      : 'Photo ajoutée au livre d\'or !');
     fichiersChoisis = [];
     $('input-photos').value=''; $('photo-comment').value='';
     $('apercu-fichiers').innerHTML=''; $('form-photo').classList.remove('ouvert');
-    setTimeout(chargerGalerie, 1500);
-  }else{
-    toast('L\'envoi a échoué — vérifiez votre connexion et réessayez.');
+  } else {
+    // Les échecs RESTENT dans le bac : on ne perd jamais une photo en silence.
+    fichiersChoisis = echecs;
+    dessinerApercus();
+    // …et restent visiblement en échec, pas déguisés en photos neuves.
+    $('apercu-fichiers').querySelectorAll('.vignette').forEach(v => {
+      v.className = 'vignette echec';
+      v.querySelector('.voile').textContent = '↻';
+    });
+    toast(echecs.length > 1
+      ? echecs.length+' photos n\'ont pas pu partir.'
+      : 'Une photo n\'a pas pu partir.',
+      {action:'Réessayer', surAction: () => $('btn-envoyer-photos').click()});
   }
+  chargerGalerie().catch(()=>{});
 };
 
 /* ================= Compteur d'invités ================= */
@@ -955,12 +1513,19 @@ async function majCompteur(){
 majCompteur();
 setInterval(majCompteur, 60000);
 
-/* ================= Rafraîchissement ================= */
-majNowPlaying(); majFile();
-setInterval(majNowPlaying, 5000);
-setInterval(majFile, 7000);
-setInterval(()=>{
-  if($('page-livredor').classList.contains('actif')) chargerGalerie();
+/* Squelettes aux dimensions réelles plutôt qu'un « Chargement… » muet :
+   la page ne saute pas quand les vraies cartes arrivent. appliquerFile
+   les retire au premier rendu réel. */
+$('file').innerHTML = '<div class="squelette"></div>'.repeat(3);
+$('file-vide').style.display = 'none';
+
+/* ================= Rafraîchissement =================
+   creerSondage remplace setInterval : une erreur n'arrête plus le sondage,
+   elle l'espace (5 s → 10 → 20 → 30 max) jusqu'au retour du réseau. */
+creerSondage('lecture', majNowPlaying, 5000);
+creerSondage('file', majFile, 7000);
+creerSondage('livredor', async () => {
+  if($('page-livredor').classList.contains('actif')) await chargerGalerie();
 }, 15000);
 </script>
 </body>

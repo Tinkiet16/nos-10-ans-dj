@@ -55,6 +55,24 @@
     padding:12px 22px;border-radius:999px;opacity:0;pointer-events:none;
     transition:opacity .25s,transform .25s;max-width:90vw;text-align:center}
   .toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast{display:flex;align-items:center;gap:12px;justify-content:center}
+  .toast-action{background:none;border:none;font-family:inherit;font-weight:600;
+    font-size:14px;color:var(--nuit);text-decoration:underline;cursor:pointer;
+    padding:6px 2px;min-height:44px}
+  .case-fondu{display:flex;align-items:flex-start;gap:11px;margin:10px 2px 0;
+    font-size:13.5px;color:var(--etain);line-height:1.45;cursor:pointer;
+    min-height:44px;padding:6px 0}
+  .case-fondu input{flex:none;width:20px;height:20px;margin-top:1px;accent-color:var(--champagne)}
+  .case-fondu b{color:var(--ivoire);font-weight:500}
+  .zone-code{background:var(--carte);border:1px solid #30333d;border-radius:14px;
+    padding:16px;margin-top:14px}
+  .zone-code label{display:block;font-size:13px;color:var(--etain);margin-bottom:8px}
+  .champ{width:100%;background:var(--carte-2);border:1px solid #383b45;border-radius:999px;
+    padding:12px 18px;color:var(--ivoire);font-family:inherit;font-size:16px;outline:none;
+    margin-bottom:10px}
+  .champ:focus-visible{border-color:var(--champagne)}
+  button:focus-visible,a:focus-visible,input:focus-visible{
+    outline:2px solid var(--champagne);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -65,7 +83,20 @@
 <div class="etat ko" id="etat">Vérification…</div>
 <a class="btn" href="/login" id="btn-connexion">Connecter mon Spotify</a>
 
+<div class="zone-code" id="zone-code" style="display:none">
+  <label for="champ-code">Code admin</label>
+  <input class="champ" id="champ-code" type="password" autocomplete="current-password">
+  <button class="btn" id="btn-code">Valider</button>
+</div>
+
 <div id="zone-connecte" style="display:none">
+
+  <p class="section-titre">Avant de lancer la musique</p>
+  <div class="etat" id="diagnostic" role="status">Vérification du lecteur…</div>
+  <label class="case-fondu">
+    <input type="checkbox" id="fondu-verifie">
+    <span>J'ai mis le <b>fondu enchaîné à 0</b> dans Spotify (Réglages → Lecture)</span>
+  </label>
 
   <p class="section-titre">Vos invités connectés</p>
   <p class="vide" id="invites-total" style="padding:0 0 8px"></p>
@@ -73,7 +104,8 @@
 
   <p class="section-titre">Demandes des invités</p>
   <button class="btn" id="btn-pause" style="margin-bottom:10px">…</button>
-  <div id="file-admin"><p class="vide">Chargement…</p></div>
+  <div id="file-admin"></div>
+  <p class="vide" id="file-admin-vide">Aucune demande en attente.</p>
   <button class="btn-secondaire" id="btn-vider">Vider toute la liste d'attente</button>
 
   <p class="section-titre">Livre d'or — appuyez sur une photo pour la supprimer</p>
@@ -92,32 +124,35 @@
 
 <div class="toast" id="toast" role="status"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Copie locale : si le réseau de la salle filtre le CDN, il n'y avait
+     plus de QR code le soir même. Bibliothèque qrcodejs, licence MIT. -->
+<script src="/qrcode.min.js"></script>
+<script src="/commun.js"></script>
 <script>
-const $ = id => document.getElementById(id);
-let toastTimer;
-function toast(msg){
-  $('toast').textContent=msg; $('toast').classList.add('visible');
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2600);
-}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+/* $, esc, toast, api, rendreListe, flip et creerSondage viennent de /commun.js */
 
-/* Code admin (si défini côté serveur) */
-function apiAdmin(url, options={}){
-  const code = localStorage.getItem('adminCode') || '';
-  return fetch(url, {...options, headers:{
-    ...(options.body?{'Content-Type':'application/json'}:{}),
-    ...(code?{'X-Admin-Code':code}:{}),
-    ...(options.headers||{})
-  }}).then(async r=>{
-    if(r.status===403){
-      const saisie = prompt('Code admin :');
-      if(saisie){ localStorage.setItem('adminCode', saisie); return apiAdmin(url, options); }
-    }
-    return r;
-  });
-}
+configurerApi(() => {
+  const code = localStorage.getItem('adminCode');
+  return code ? {'X-Admin-Code': code} : {};
+});
 
+/* Le code admin se saisit dans la page : prompt() est bloqué dans certains
+   contextes PWA, et l'ancienne version se rappelait récursivement. */
+function demanderCode(){
+  $('zone-code').style.display = 'block';
+  $('champ-code').focus();
+}
+$('btn-code').onclick = ()=>{
+  const v = $('champ-code').value.trim();
+  if(!v) return;
+  localStorage.setItem('adminCode', v);
+  $('zone-code').style.display = 'none';
+  $('champ-code').value = '';
+  verifier();
+};
+$('champ-code').addEventListener('keydown', e=>{ if(e.key==='Enter') $('btn-code').click(); });
+
+let sondagesLances = false;
 async function verifier(){
   const d = await (await fetch('/api/status')).json();
   if(d.connected){
@@ -129,10 +164,15 @@ async function verifier(){
     $('qr').style.display = 'block';
     new QRCode($('qr'), {text:url, width:180, height:180});
     $('url-invites').textContent = 'Page invités : ' + url;
-    chargerPlaylists();
-    chargerEtat();
-    chargerPhotosAdmin();
-    chargerInvites();
+    chargerPlaylists().catch(()=>{});
+    chargerPhotosAdmin().catch(()=>{});
+    // Sondages à reprise : une coupure les espace au lieu de les arrêter.
+    if(!sondagesLances){
+      sondagesLances = true;
+      creerSondage('etat', chargerEtat, 10000);
+      creerSondage('invites', chargerInvites, 30000);
+      creerSondage('diagnostic', chargerDiagnostic, 15000);
+    }
   }else{
     $('etat').textContent = 'Spotify n\'est pas encore connecté.';
     $('etat').className = 'etat ko';
@@ -140,7 +180,9 @@ async function verifier(){
 }
 
 async function chargerPlaylists(){
-  const d = await (await apiAdmin('/api/admin/playlists')).json();
+  const {ok, statut, data:d} = await api('/api/admin/playlists');
+  if(statut === 403) return demanderCode();
+  if(!ok) return;
   $('playlists').innerHTML = (d.playlists||[]).length
     ? d.playlists.map(p=>
         '<div class="pl">'+
@@ -151,31 +193,93 @@ async function chargerPlaylists(){
     : '<p class="vide">Aucune playlist trouvée sur votre compte.</p>';
 }
 
-/* ---- Demandes des invités : pause + modération ---- */
+/* ---- Diagnostic du lecteur ------------------------------------------------
+   Le mode d'échec n°1 du jour J est « aucun appareil actif ». Le pupitre le
+   dit désormais, au lieu de laisser chercher.
+   Le fondu enchaîné n'est PAS lisible par l'API : il reste une case à cocher
+   manuelle. Un faux voyant vert ici coûterait la synchronisation de la
+   soirée entière. */
+async function chargerDiagnostic(){
+  const {ok, statut, data:d} = await api('/api/admin/player');
+  if(statut === 403){ demanderCode(); return; }
+  if(!ok) return;
+  const el = $('diagnostic');
+  if(!d.actif){
+    el.className = 'etat ko';
+    el.textContent = 'Aucun appareil actif — ouvrez Spotify sur l\'ordinateur et lancez n\'importe quel titre une fois.';
+  } else if(!d.joue){
+    el.className = 'etat ko';
+    el.textContent = 'Appareil : ' + d.appareil + ' — mais rien ne joue. Lancez un titre.';
+  } else {
+    el.className = 'etat ok';
+    el.textContent = '✓ Appareil : ' + d.appareil + ' — lecture en cours.';
+  }
+}
+
+/* La case est purement déclarative : on mémorise, on ne vérifie pas. */
+$('fondu-verifie').checked = localStorage.getItem('fonduVerifie') === '1';
+$('fondu-verifie').onchange = e =>
+  localStorage.setItem('fonduVerifie', e.target.checked ? '1' : '0');
+
+/* ---- Demandes des invités : pause + modération ----------------------------
+   Le bouton « retirer » est DESTRUCTIF : même risque de mis-tap que côté
+   invités, mais avec une conséquence pire. La liste est donc réconciliée et
+   son ordre figé 4 s après chaque tap, comme la file des invités. */
 let etatOuvert = true;
+let gelAdminJusqua = 0, ordreAdminGele = null, derniereFileAdmin = [];
+
+function construireLigneAdmin(t){
+  const el = document.createElement('div');
+  el.className = 'pl';
+  el.innerHTML = (t.image ? '<img src="'+t.image+'" alt="">' : '<img alt="">')+
+    '<div class="infos"><div class="t"></div><div class="a"></div></div>'+
+    '<button class="btn-jouer" type="button"></button>';
+  majLigneAdmin(el, t);
+  return el;
+}
+function majLigneAdmin(el, t){
+  el.querySelector('.t').textContent = t.title;
+  el.querySelector('.a').textContent =
+    t.artists+' · ♥ '+t.pour+' · 💔 '+t.contre+' · par '+t.proposePar;
+  const b = el.querySelector('.btn-jouer');
+  b.dataset.retirer = t.uri;
+  b.setAttribute('aria-label', 'Retirer ' + t.title);
+  b.innerHTML = SVG_CROIX;
+}
+
+function appliquerFileAdmin(queue){
+  derniereFileAdmin = queue;
+  const gele = Date.now() < gelAdminJusqua && ordreAdminGele;
+  let aAfficher = queue;
+  if(gele){
+    const rang = new Map(ordreAdminGele.map((u,i) => [u,i]));
+    aAfficher = queue.filter(t => rang.has(t.uri))
+                     .sort((a,b) => rang.get(a.uri) - rang.get(b.uri));
+    setTimeout(() => appliquerFileAdmin(derniereFileAdmin), gelAdminJusqua - Date.now() + 50);
+  } else {
+    ordreAdminGele = null;
+  }
+  $('file-admin-vide').style.display = aAfficher.length ? 'none' : 'block';
+  flip($('file-admin'), () => rendreListe($('file-admin'), aAfficher,
+    t => t.uri, construireLigneAdmin, majLigneAdmin));
+}
+
 async function chargerEtat(){
-  const r = await apiAdmin('/api/admin/etat');
-  if(!r.ok) return;
-  const d = await r.json();
+  const {ok, statut, data:d} = await api('/api/admin/etat');
+  if(statut === 403){ demanderCode(); return; }
+  if(!ok) return;
   etatOuvert = d.ouvert;
   $('btn-pause').textContent = etatOuvert
     ? '⏸ Mettre les demandes en pause (dîner, discours…)'
     : '▶ Rouvrir les demandes des invités';
   $('btn-pause').style.background = etatOuvert ? '' : '#8fce9a';
-  $('file-admin').innerHTML = (d.queue||[]).length
-    ? d.queue.map(t=>
-        '<div class="pl">'+
-          (t.image?'<img src="'+t.image+'" alt="">':'<img alt="">')+
-          '<div class="infos"><div class="t">'+esc(t.title)+'</div>'+
-          '<div class="a">'+esc(t.artists)+' · ♥ '+t.pour+' · 💔 '+t.contre+' · par '+esc(t.proposePar)+'</div></div>'+
-          '<button class="btn-jouer" data-retirer="'+t.uri+'" aria-label="Retirer '+esc(t.title)+'">✕</button></div>').join('')
-    : '<p class="vide">Aucune demande en attente.</p>';
+  appliquerFileAdmin(d.queue || []);
 }
 
 $('btn-pause').onclick = async ()=>{
-  const r = await apiAdmin('/api/admin/demandes',{method:'POST',
+  const {ok} = await api('/api/admin/demandes',{method:'POST',
     body:JSON.stringify({ouvert: !etatOuvert})});
-  if(r.ok){
+  if(ok){
     toast(!etatOuvert ? '▶ Demandes rouvertes !' : '⏸ Demandes en pause.');
     chargerEtat();
   }
@@ -183,24 +287,32 @@ $('btn-pause').onclick = async ()=>{
 
 $('file-admin').addEventListener('click', async e=>{
   const b = e.target.closest('[data-retirer]'); if(!b) return;
-  const r = await apiAdmin('/api/admin/retirer',{method:'POST',
-    body:JSON.stringify({uri: b.dataset.retirer})});
-  if(r.ok){ toast('Titre retiré.'); chargerEtat(); }
+  ordreAdminGele = derniereFileAdmin.map(t => t.uri);
+  gelAdminJusqua = Date.now() + 4000;
+  try{
+    const {ok} = await api('/api/admin/retirer',{method:'POST',
+      body:JSON.stringify({uri: b.dataset.retirer})});
+    if(ok){ toast('Titre retiré.'); chargerEtat(); }
+  }catch(err){
+    toast('Retrait non enregistré — réseau instable.');
+  }
 });
-
-setInterval(chargerEtat, 10000);
 
 $('playlists').addEventListener('click', async e=>{
   const b = e.target.closest('.btn-jouer[data-uri]'); if(!b) return;
-  const r = await apiAdmin('/api/admin/play',{method:'POST',body:JSON.stringify({uri:b.dataset.uri})});
-  const d = await r.json();
-  toast(r.ok ? '▶ Playlist lancée !' : (d.error || 'Oups, réessayez.'));
+  try{
+    const {ok, data:d} = await api('/api/admin/play',{method:'POST',body:JSON.stringify({uri:b.dataset.uri})});
+    toast(ok ? '▶ Playlist lancée !' : (d.error || 'Oups, réessayez.'));
+  }catch(err){ toast('Lancement impossible — réseau instable.'); }
 });
 
 $('btn-vider').onclick = async ()=>{
   if(!confirm('Vider la liste d\'attente des invités ?')) return;
-  await apiAdmin('/api/admin/clear-queue',{method:'POST'});
-  toast('Liste d\'attente vidée.');
+  try{
+    await api('/api/admin/clear-queue',{method:'POST'});
+    toast('Liste d\'attente vidée.');
+    chargerEtat();
+  }catch(err){ toast('Vidage impossible — réseau instable.'); }
 };
 
 /* ---- Registre des invités connectés ---- */
@@ -209,9 +321,9 @@ function ilYaMin(ts){
   return m<1 ? 'actif à l\'instant' : m<60 ? 'actif il y a '+m+' min' : 'actif il y a '+Math.round(m/60)+' h';
 }
 async function chargerInvites(){
-  const r = await apiAdmin('/api/admin/invites');
-  if(!r.ok) return;
-  const d = await r.json();
+  const {ok, statut, data:d} = await api('/api/admin/invites');
+  if(statut === 403){ demanderCode(); return; }
+  if(!ok) return;
   $('invites-total').textContent = d.total
     ? '🥂 '+d.total+' invité'+(d.total>1?'s ont':' a')+' ouvert l\'appli'
     : 'Personne pour l\'instant — le QR code les attend !';
@@ -220,11 +332,9 @@ async function chargerInvites(){
     '<span class="quand">arrivé '+new Date(i.firstSeen).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+
     ' · '+ilYaMin(i.lastSeen)+'</span></div>').join('');
 }
-setInterval(chargerInvites, 30000);
-
 /* ---- Livre d'or : suppression de photos ---- */
 async function chargerPhotosAdmin(){
-  const d = await (await fetch('/api/livredor')).json();
+  const {data:d} = await api('/api/livredor');
   const photos = d.photos || [];
   $('photos-admin').innerHTML = photos.length
     ? photos.map(p=>
@@ -234,16 +344,44 @@ async function chargerPhotosAdmin(){
     : '<p class="vide">Aucune photo dans le livre d\'or.</p>';
 }
 
-$('photos-admin').addEventListener('click', async e=>{
+/* Vraie annulation plutôt qu'un confirm() : sur un téléphone tenu à bout de
+   bras, une boîte de dialogue ne protège de rien, et la suppression
+   Cloudinary est définitive. La photo disparaît tout de suite, l'appel réel
+   attend 6 secondes. */
+let suppressionEnAttente = null;
+
+$('photos-admin').addEventListener('click', e=>{
   const ph = e.target.closest('.ph'); if(!ph) return;
-  if(!confirm('Supprimer définitivement cette photo (et ses petits mots) ?')) return;
-  const r = await apiAdmin('/api/admin/photo-supprimer',{method:'POST',
-    body:JSON.stringify({id: ph.dataset.id})});
-  if(r.ok){ toast('🗑️ Photo supprimée.'); ph.remove(); }
-  else{ const d = await r.json().catch(()=>({})); toast(d.error || 'Suppression impossible.'); }
+  const id = ph.dataset.id;
+  const parent = ph.parentNode;
+  const voisin = ph.nextSibling;
+  ph.remove();
+
+  if(suppressionEnAttente) clearTimeout(suppressionEnAttente.minuteur);
+  const minuteur = setTimeout(async () => {
+    suppressionEnAttente = null;
+    try{
+      const {ok, data:d} = await api('/api/admin/photo-supprimer',
+        {method:'POST', body: JSON.stringify({id})});
+      if(!ok){ toast(d.error || 'Suppression impossible.'); chargerPhotosAdmin().catch(()=>{}); }
+    }catch(err){
+      toast('Suppression impossible — réseau instable.');
+      chargerPhotosAdmin().catch(()=>{});
+    }
+  }, 6000);
+  suppressionEnAttente = {minuteur, id};
+
+  toast('Photo retirée du livre d\'or.', {
+    action: 'Annuler',
+    surAction(){
+      clearTimeout(minuteur);
+      suppressionEnAttente = null;
+      parent.insertBefore(ph, voisin);
+    },
+  });
 });
 
-$('btn-rafraichir-photos').onclick = chargerPhotosAdmin;
+$('btn-rafraichir-photos').onclick = () => chargerPhotosAdmin().catch(()=>{});
 
 verifier();
 </script>
